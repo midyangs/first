@@ -1,0 +1,22 @@
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# 依赖与构建产物
+node_modules/
+dist/
+build/
+*.log
+
+# 本地环境
+.env
+.env.local
+__pycache__/
+*.pyc
+
+# 临时文件
+*.tmp
+*.bak

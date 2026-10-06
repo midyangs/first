@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>榜单星球 · 同城榜单</title>
+<style>
+:root{
+  --primary:#FF6B00;
+  --primary-light:#FF8A2B;
+  --primary-pale:#FFF4EC;
+  --primary-grad:linear-gradient(135deg,#FF8A00 0%,#FF5E00 100%);
+  --red:#FF3B30;
+  --text:#1A1A1A;
+  --text-2:#666;
+  --text-3:#999;
+  --line:#F0F0F0;
+  --bg:#F5F6F8;
+  --card:#FFFFFF;
+  --radius:14px;
+  --shadow:0 2px 12px rgba(0,0,0,.06);
+  --shadow-lg:0 8px 28px rgba(255,107,0,.18);
+  --tabbar-h:56px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background:#E9EBEF;
+  color:var(--text);
+  font-size:14px;
+  line-height:1.5;
+  display:flex;
+  justify-content:center;
+}
+#app{
+  width:100%;
+  max-width:480px;
+  min-height:100vh;
+  background:var(--bg);
+  position:relative;
+  overflow-x:hidden;
+  box-shadow:0 0 40px rgba(0,0,0,.08);
+}
+/* ---------- 通用 ---------- */
+.view{display:none;padding-bottom:calc(var(--tabbar-h) + var(--safe-b) + 12px);min-height:100vh;}
+.view.active{display:block;animation:fade .22s ease;}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.scroll-top{overflow-anchor:none;}
+img{display:block;max-width:100%;}
+button{font-family:inherit;border:none;background:none;cursor:pointer;color:inherit;}
+input,textarea,select{font-family:inherit;font-size:14px;border:none;outline:none;background:none;color:inherit;}
+::-webkit-scrollbar{display:none;}
+
+/* ---------- 顶部头图 ---------- */
+.hero{
+  background:var(--primary-grad);
+  padding:16px 16px 60px;
+  position:relative;
+  overflow:hidden;
+  border-radius:0 0 22px 22px;
+}
+.hero::after{
+  content:"";position:absolute;right:-40px;top:-40px;width:170px;height:170px;
+  background:rgba(255,255,255,.12);border-radius:50%;
+}
+.hero::before{
+  content:"";position:absolute;right:30px;top:70px;width:80px;height:80px;
+  background:rgba(255,255,255,.08);border-radius:50%;
+}
+.hero-top{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:2;}
+.city-btn{
+  display:flex;align-items:center;gap:4px;color:#fff;font-size:15px;font-weight:600;
+  background:rgba(255,255,255,.18);padding:6px 12px;border-radius:20px;backdrop-filter:blur(4px);
+}
+.city-btn .arrow{font-size:10px;opacity:.9;}
+.hero-logo{color:#fff;font-size:13px;font-weight:700;letter-spacing:.5px;opacity:.95;display:flex;align-items:center;gap:5px;}
+.hero-title{color:#fff;font-size:22px;font-weight:800;margin-top:16px;position:relative;z-index:2;letter-spacing:.5px;}
+.hero-sub{color:rgba(255,255,255,.88);font-size:12.5px;margin-top:6px;position:relative;z-index:2;}
+.search-bar{
+  margin:-38px 16px 0;position:relative;z-index:5;
+  background:#fff;border-radius:26px;box-shadow:0 6px 20px rgba(255,107,0,.16);
+  display:flex;align-items:center;padding:0 16px;height:46px;
+}
+.search-bar .ico{font-size:16px;opacity:.5;margin-right:8px;}
+.search-bar input{flex:1;height:100%;font-size:14px;}
+.search-bar input::placeholder{color:#BBB;}
+
+/* ---------- 分类 chips ---------- */
+.cats{display:flex;gap:9px;padding:16px 16px 4px;overflow-x:auto;}
+.chip{
+  flex-shrink:0;padding:8px 17px;border-radius:20px;background:#fff;color:var(--text-2);
+  font-size:13.5px;font-weight:600;transition:.18s;box-shadow:0 1px 4px rgba(0,0,0,.04);
+  display:flex;align-items:center;gap:5px;
+}
+.chip.on{background:var(--primary-grad);color:#fff;box-shadow:0 4px 12px rgba(255,107,0,.32);}
+.chip:active{transform:scale(.95);}
+
+/* ---------- 模块标题 ---------- */
+.sec-title{display:flex;align-items:center;justify-content:space-between;padding:20px 16px 10px;}
+.sec-title h3{font-size:16.5px;font-weight:800;display:flex;align-items:center;gap:7px;}
+.sec-title h3::before{content:"";width:4px;height:16px;background:var(--primary-grad);border-radius:3px;}
+.sec-title .more{font-size:12px;color:var(--text-3);}
+
+/* ---------- 榜单卡片 ---------- */
+.list{padding:0 16px;display:flex;flex-direction:column;gap:14px;}
+.rank-card{
+  background:var(--card);border-radius:var(--radius);overflow:hidden;
+  box-shadow:var(--shadow);transition:.2s;position:relative;
+}
+.rank-card:active{transform:scale(.985);}
+.rc-cover{
+  height:112px;position:relative;display:flex;align-items:center;justify-content:center;
+  font-size:44px;
+}
+.rc-badge{
+  position:absolute;left:10px;top:10px;background:rgba(0,0,0,.42);color:#fff;
+  font-size:11px;padding:3px 9px;border-radius:12px;font-weight:600;backdrop-filter:blur(3px);
+}
+.rc-cat{
+  position:absolute;right:10px;top:10px;background:rgba(255,255,255,.92);color:var(--primary);
+  font-size:11px;padding:3px 9px;border-radius:12px;font-weight:700;
+}
+.rc-body{padding:12px 14px 14px;}
+.rc-name{font-size:16px;font-weight:800;display:flex;align-items:center;gap:5px;}
+.rc-desc{font-size:12.5px;color:var(--text-2);margin-top:5px;line-height:1.5;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.rc-meta{display:flex;align-items:center;gap:14px;margin-top:11px;font-size:11.5px;color:var(--text-3);}
+.rc-meta span{display:flex;align-items:center;gap:3px;}
+.rc-hot{color:var(--primary);font-weight:700;}
+
+/* ---------- 详情页 ---------- */
+.detail-hero{
+  height:180px;position:relative;display:flex;align-items:flex-end;
+  padding:16px;color:#fff;
+}
+.detail-hero .dh-mask{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.62),transparent 62%);}
+.detail-hero .dh-emoji{position:absolute;top:44px;left:50%;transform:translateX(-50%);font-size:58px;opacity:.95;}
+.detail-hero .dh-txt{position:relative;z-index:2;}
+.detail-hero h2{font-size:20px;font-weight:800;}
+.detail-hero .dh-meta{font-size:12px;opacity:.92;margin-top:5px;display:flex;gap:12px;}
+.back-btn{
+  position:absolute;left:12px;top:12px;z-index:5;width:34px;height:34px;border-radius:50%;
+  background:rgba(0,0,0,.35);color:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:18px;backdrop-filter:blur(4px);
+}
+.detail-desc{
+  background:#fff;margin:-14px 12px 0;border-radius:var(--radius);padding:14px;
+  box-shadow:var(--shadow);position:relative;z-index:3;font-size:13px;color:var(--text-2);line-height:1.6;
+}
+.entry-list{padding:8px 12px 0;display:flex;flex-direction:column;gap:11px;}
+.entry{
+  background:#fff;border-radius:var(--radius);padding:12px;display:flex;gap:11px;
+  box-shadow:var(--shadow);position:relative;align-items:flex-start;
+  transition:.2s;
+}
+.entry-top3{border:1.5px solid rgba(255,107,0,.22);}
+.entry-no{
+  position:absolute;left:0;top:0;min-width:26px;height:22px;padding:0 7px;
+  border-radius:12px 0 12px 0;display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:800;color:#fff;background:#C8C8C8;z-index:2;
+}
+.no1{background:linear-gradient(135deg,#FFD54A,#FF9800);}
+.no2{background:linear-gradient(135deg,#B0BEC5,#78909C);}
+.no3{background:linear-gradient(135deg,#E8A87C,#C97B47);}
+.entry-thumb{
+  width:62px;height:62px;border-radius:11px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:28px;
+}
+.entry-info{flex:1;min-width:0;padding-top:2px;}
+.entry-name{font-size:14.5px;font-weight:700;display:flex;align-items:center;gap:6px;}
+.entry-score{color:var(--primary);font-weight:800;font-size:12.5px;}
+.entry-tags{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;}
+.tag{font-size:10.5px;padding:2px 7px;border-radius:6px;background:var(--primary-pale);color:var(--primary);font-weight:600;}
+.tag.gray{background:#F4F4F6;color:var(--text-3);font-weight:500;}
+.entry-reason{font-size:12px;color:var(--text-2);margin-top:7px;line-height:1.5;}
+.entry-addr{font-size:11px;color:var(--text-3);margin-top:5px;display:flex;align-items:center;gap:3px;}
+.like-btn{
+  display:flex;flex-direction:column;align-items:center;gap:1px;
+  color:var(--text-3);font-size:10px;padding:2px 0 0;flex-shrink:0;min-width:34px;
+}
+.like-btn .heart{font-size:17px;transition:.2s;line-height:1;}
+.like-btn.on{color:var(--red);}
+.like-btn.on .heart{transform:scale(1.15);}
+.like-btn:active .heart{transform:scale(1.32);}
+.like-btn .cnt{font-weight:700;font-size:11px;}
+
+/* ---------- 底部操作条 ---------- */
+.detail-bar{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:480px;background:#fff;padding:10px 16px calc(10px + var(--safe-b));
+  display:flex;gap:11px;box-shadow:0 -2px 14px rgba(0,0,0,.07);z-index:60;
+}
+.btn-fav{
+  flex:1;height:44px;border-radius:22px;background:var(--primary-pale);color:var(--primary);
+  font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.btn-fav.on{background:#FFEDED;color:var(--red);}
+.btn-pub{
+  flex:1.7;height:44px;border-radius:22px;background:var(--primary-grad);color:#fff;
+  font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:6px;
+  box-shadow:0 4px 14px rgba(255,107,0,.34);
+}
+.btn-pub:active,.btn-fav:active{opacity:.85;}
+
+/* ---------- 底部导航 ---------- */
+.tabbar{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:480px;height:calc(var(--tabbar-h) + var(--safe-b));
+  padding-bottom:var(--safe-b);
+  background:rgba(255,255,255,.97);backdrop-filter:blur(10px);
+  border-top:1px solid var(--line);display:flex;z-index:70;
+}
+.tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  color:#9AA0A6;font-size:10.5px;font-weight:600;transition:.15s;position:relative;
+}
+.tab .ti{font-size:20px;line-height:1;filter:grayscale(1) opacity(.55);transition:.15s;}
+.tab.on{color:var(--primary);}
+.tab.on .ti{filter:none;transform:translateY(-1px);}
+.tab.mid .ti{
+  font-size:22px;width:44px;height:32px;border-radius:16px;background:var(--primary-grad);
+  display:flex;align-items:center;justify-content:center;filter:none;color:#fff;
+  box-shadow:0 4px 12px rgba(255,107,0,.32);
+}
+
+/* ---------- 发布页 ---------- */
+.form-wrap{padding:0 14px 30px;}
+.form-card{background:#fff;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:13px;}
+.form-label{font-size:13px;font-weight:700;margin-bottom:9px;display:flex;align-items:center;gap:5px;}
+.form-label .req{color:var(--red);font-size:12px;}
+.f-input{
+  width:100%;background:var(--bg);border-radius:10px;padding:11px 13px;font-size:14px;
+}
+.f-input:focus{background:#FFF7F1;}
+textarea.f-input{resize:none;line-height:1.6;min-height:74px;}
+.seg{display:flex;gap:9px;}
+.seg .seg-item{
+  flex:1;height:42px;border-radius:11px;background:var(--bg);display:flex;align-items:center;
+  justify-content:center;gap:5px;font-size:13.5px;font-weight:600;color:var(--text-2);transition:.16s;
+}
+.seg .seg-item.on{background:var(--primary);color:#fff;box-shadow:0 4px 12px rgba(255,107,0,.28);}
+.entry-editor{border:1.5px dashed #FFD9BE;border-radius:12px;padding:13px;margin-bottom:11px;background:#FFFCFA;position:relative;}
+.entry-editor .del{
+  position:absolute;right:9px;top:9px;color:var(--text-3);font-size:15px;
+  width:24px;height:24px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;
+}
+.ee-row{display:flex;gap:9px;margin-bottom:9px;}
+.ee-row .f-input{flex:1;}
+.ee-row .f-input.sm{flex:0 0 92px;}
+.add-entry{
+  width:100%;height:44px;border-radius:12px;border:1.5px dashed var(--primary);color:var(--primary);
+  font-weight:700;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:6px;background:#FFF9F4;
+}
+.submit-btn{
+  width:100%;height:48px;border-radius:24px;background:var(--primary-grad);color:#fff;
+  font-weight:800;font-size:15.5px;box-shadow:0 6px 18px rgba(255,107,0,.34);margin-top:6px;
+}
+.submit-btn:active{opacity:.88;}
+
+/* ---------- 我的 ---------- */
+.me-hero{
+  background:var(--primary-grad);padding:26px 16px 44px;border-radius:0 0 22px 22px;position:relative;overflow:hidden;
+}
+.me-hero::after{content:"";position:absolute;right:-30px;top:-30px;width:140px;height:140px;background:rgba(255,255,255,.12);border-radius:50%;}
+.me-profile{display:flex;align-items:center;gap:13px;position:relative;z-index:2;}
+.me-avatar{
+  width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,.95);
+  display:flex;align-items:center;justify-content:center;font-size:29px;box-shadow:0 4px 14px rgba(0,0,0,.12);
+}
+.me-name{color:#fff;font-size:17.5px;font-weight:800;}
+.me-lv{color:rgba(255,255,255,.9);font-size:12px;margin-top:4px;display:flex;align-items:center;gap:5px;}
+.stats{
+  display:flex;background:#fff;margin:-28px 14px 0;border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:15px 0;position:relative;z-index:3;
+}
+.stat{flex:1;text-align:center;position:relative;}
+.stat:not(:last-child)::after{content:"";position:absolute;right:0;top:6px;bottom:6px;width:1px;background:var(--line);}
+.stat .num{font-size:19px;font-weight:800;color:var(--primary);}
+.stat .lb{font-size:11.5px;color:var(--text-3);margin-top:3px;}
+.menu{background:#fff;margin:14px;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
+.menu-item{display:flex;align-items:center;padding:15px 15px;gap:11px;border-bottom:1px solid var(--line);}
+.menu-item:last-child{border-bottom:none;}
+.menu-item .mi{font-size:18px;width:26px;text-align:center;}
+.menu-item .mt{flex:1;font-size:14px;font-weight:600;}
+.menu-item .mv{font-size:12.5px;color:var(--text-3);}
+.menu-item .arrow{color:#CCC;font-size:14px;}
+.empty{text-align:center;padding:50px 20px;color:var(--text-3);}
+.empty .e-ico{font-size:46px;margin-bottom:12px;opacity:.5;}
+.empty .e-txt{font-size:13px;}
+
+/* ---------- 排行榜 tab 页 ---------- */
+.lead{display:flex;flex-direction:column;gap:12px;padding:12px 14px;}
+.lead-item{
+  background:#fff;border-radius:var(--radius);padding:13px;display:flex;gap:12px;align-items:center;
+  box-shadow:var(--shadow);
+}
+.lead-rank{
+  font-size:19px;font-weight:900;width:30px;text-align:center;font-style:italic;
+  background:var(--primary-grad);-webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.lead-rank.gray{background:#C8C8C8;-webkit-background-clip:text;background-clip:text;color:transparent;}
+.lead-info{flex:1;min-width:0;}
+.lead-info .ln{font-size:14px;font-weight:700;}
+.lead-info .ls{font-size:11.5px;color:var(--text-3);margin-top:4px;}
+.lead-hot{font-size:12px;color:var(--primary);font-weight:800;text-align:right;}
+
+/* ---------- 城市弹层 ---------- */
+.mask{position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:100;display:none;}
+.mask.on{display:block;}
+.sheet{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);
+  width:100%;max-width:480px;background:#fff;border-radius:18px 18px 0 0;z-index:101;
+  padding:18px 16px calc(20px + var(--safe-b));transition:transform .26s ease;
+}
+.sheet.on{transform:translateX(-50%) translateY(0);}
+.sheet h3{font-size:16px;font-weight:800;margin-bottom:14px;}
+.city-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.city-item{
+  height:42px;border-radius:10px;background:var(--bg);display:flex;align-items:center;justify-content:center;
+  font-size:13.5px;font-weight:600;color:var(--text-2);
+}
+.city-item.on{background:var(--primary);color:#fff;}
+
+/* toast */
+.toast{
+  position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);
+  background:rgba(0,0,0,.82);color:#fff;padding:12px 22px;border-radius:12px;font-size:13.5px;
+  z-index:200;opacity:0;pointer-events:none;transition:.24s;font-weight:600;
+}
+.toast.on{opacity:1;transform:translate(-50%,-50%) scale(1);}
+
+/* 发布页 view 无 tabbar 时的底部留白 */
+.view.has-bar{padding-bottom:calc(72px + var(--safe-b));}
+.hint{font-size:11.5px;color:var(--text-3);margin-top:7px;line-height:1.5;}
+.pub-head{background:#fff;padding:14px 16px;display:flex;align-items:center;gap:11px;position:sticky;top:0;z-index:30;box-shadow:0 1px 6px rgba(0,0,0,.04);}
+.pub-head .bk{font-size:20px;}
+.pub-head h2{font-size:17px;font-weight:800;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ================= 首页 ================= -->
+  <section class="view active" id="view-home">
+    <div class="hero">
+      <div class="hero-top">
+        <button class="city-btn" onclick="openCity()">
+          <span>📍</span><span id="homeCity">成都</span><span class="arrow">▼</span>
+        </button>
+        <div class="hero-logo">🪐 榜单星球</div>
+      </div>
+      <div class="hero-title">同城榜单</div>
+      <div class="hero-sub" id="heroSub">发现身边最值得去的美食与玩乐</div>
+    </div>
+    <div class="search-bar" onclick="focusSearch()">
+      <span class="ico">🔍</span>
+      <input id="homeSearch" placeholder="搜索榜单、店铺、城市" readonly>
+    </div>
+
+    <div class="cats" id="homeCats"></div>
+
+    <div class="sec-title">
+      <h3 id="listTitle">🔥 热门美食榜</h3>
+      <span class="more" id="listCount">共 0 个榜单</span>
+    </div>
+    <div class="list" id="homeList"></div>
+  </section>
+
+  <!-- ================= 榜单广场 ================= -->
+  <section class="view" id="view-rank">
+    <div class="pub-head"><h2>🏆 榜单广场</h2></div>
+    <div class="cats" id="rankCats"></div>
+    <div class="sec-title"><h3>全城热榜</h3><span class="more">按热度排序</span></div>
+    <div class="lead" id="rankList"></div>
+  </section>
+
+  <!-- ================= 发布 ================= -->
+  <section class="view" id="view-pub">
+    <div class="pub-head"><h2>✏️ 发布榜单</h2></div>
+    <div class="form-wrap" style="padding-top:14px;">
+      <div class="form-card">
+        <div class="form-label"><span class="req">*</span>榜单标题</div>
+        <input class="f-input" id="pubTitle" placeholder="例如：成都必吃十大苍蝇馆子">
+        <div class="form-label" style="margin-top:15px;">榜单简介</div>
+        <textarea class="f-input" id="pubDesc" placeholder="用一两句话介绍这份榜单的挑选标准～"></textarea>
+      </div>
+      <div class="form-card">
+        <div class="form-label"><span class="req">*</span>榜单分类</div>
+        <div class="seg" id="pubCat">
+          <div class="seg-item on" data-v="food" onclick="pickSeg(this)">🍜 美食</div>
+          <div class="seg-item" data-v="fun" onclick="pickSeg(this)">🎬 娱乐</div>
+        </div>
+        <div class="form-label" style="margin-top:15px;"><span class="req">*</span>所在城市</div>
+        <input class="f-input" id="pubCity" value="成都" placeholder="例如：成都">
+      </div>
+
+      <div class="form-card">
+        <div class="form-label">上榜条目 <span style="font-weight:500;color:var(--text-3);font-size:11.5px;">（至少 1 个）</span></div>
+        <div id="entryEditors"></div>
+        <button class="add-entry" onclick="addEntry()">＋ 添加上榜项目</button>
+        <div class="hint">提示：带 * 的为必填项。条目按填写顺序从第 1 名开始排列。</div>
+      </div>
+
+      <button class="submit-btn" onclick="submitRank()">🎉 发布我的榜单</button>
+    </div>
+  </section>
+
+  <!-- ================= 搜索 ================= -->
+  <section class="view" id="view-search">
+    <div class="pub-head">
+      <span class="bk" onclick="go('home')">‹</span>
+      <div class="search-bar" style="margin:0;flex:1;height:40px;box-shadow:none;background:var(--bg);">
+        <span class="ico">🔍</span>
+        <input id="searchInput" placeholder="搜索榜单、店铺" oninput="doSearch()">
+      </div>
+    </div>
+    <div id="searchResult"></div>
+  </section>
+
+  <!-- ================= 我的 ================= -->
+  <section class="view" id="view-me">
+    <div class="me-hero">
+      <div class="me-profile">
+        <div class="me-avatar">🧑‍🍳</div>
+        <div>
+          <div class="me-name">榜单体验官</div>
+          <div class="me-lv">🌟 城市探店达人 Lv.3</div>
+        </div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat" onclick="showMine('pub')"><div class="num" id="stPub">0</div><div class="lb">我发布的</div></div>
+      <div class="stat" onclick="showMine('like')"><div class="num" id="stLike">0</div><div class="lb">我点赞的</div></div>
+      <div class="stat" onclick="showMine('fav')"><div class="num" id="stFav">0</div><div class="lb">我收藏的</div></div>
+    </div>
+    <div class="menu">
+      <div class="menu-item" onclick="showMine('pub')"><span class="mi">📝</span><span class="mt">我发布的榜单</span><span class="arrow">›</span></div>
+      <div class="menu-item" onclick="showMine('like')"><span class="mi">❤️</span><span class="mt">我点赞的榜单</span><span class="arrow">›</span></div>
+      <div class="menu-item" onclick="showMine('fav')"><span class="mi">⭐</span><span class="mt">我收藏的榜单</span><span class="arrow">›</span></div>
+      <div class="menu-item" onclick="clearAll()"><span class="mi">🗑️</span><span class="mt">清除本地数据</span><span class="arrow">›</span></div>
+    </div>
+    <div id="mineList" style="padding:0 0 10px;"></div>
+  </section>
+
+  <!-- ================= 榜单详情 ================= -->
+  <section class="view" id="view-detail">
+    <div id="detailBody"></div>
+    <div class="detail-bar">
+      <button class="btn-fav" id="favBtn" onclick="toggleFav()"><span>⭐</span><span>收藏</span></button>
+      <button class="btn-pub" onclick="go('pub')"><span>✏️</span><span>我也要发榜</span></button>
+    </div>
+  </section>
+
+  <!-- ================= 底部导航 ================= -->
+  <nav class="tabbar" id="tabbar">
+    <div class="tab on" data-tab="home" onclick="go('home')"><span class="ti">🏠</span><span>首页</span></div>
+    <div class="tab" data-tab="rank" onclick="go('rank')"><span class="ti">🏆</span><span>榜单</span></div>
+    <div class="tab mid" data-tab="pub" onclick="go('pub')"><span class="ti">＋</span><span>发布</span></div>
+    <div class="tab" data-tab="me" onclick="go('me')"><span class="ti">👤</span><span>我的</span></div>
+  </nav>
+</div>
+
+<!-- 城市选择 -->
+<div class="mask" id="mask" onclick="closeCity()"></div>
+<div class="sheet" id="sheet">
+  <h3>选择城市</h3>
+  <div class="city-grid" id="cityGrid"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   数据层
+   ============================================================ */
+const CITIES = ['成都','北京','上海','广州','深圳','杭州','重庆','西安','长沙','武汉','南京','厦门'];
+
+// 封面渐变池
+const GRADS = [
+  'linear-gradient(135deg,#FFB74D,#FF7043)',
+  'linear-gradient(135deg,#FF8A65,#E64A19)',
+  'linear-gradient(135deg,#4FC3F7,#0288D1)',
+  'linear-gradient(135deg,#81C784,#388E3C)',
+  'linear-gradient(135deg,#BA68C8,#7B1FA2)',
+  'linear-gradient(135deg,#FFD54F,#FFA000)',
+  'linear-gradient(135deg,#F06292,#C2185B)',
+  'linear-gradient(135deg,#4DB6AC,#00796B)',
+  'linear-gradient(135deg,#9575CD,#512DA8)',
+  'linear-gradient(135deg,#FF7043,#BF360C)'
+];
+
+// 内置示例榜单
+const SEED = [
+  {
+    id:'s1', title:'成都必吃十大苍蝇馆子', cat:'food', city:'成都', cover:'🌶️', grad:0,
+    desc:'不看装修只看味道！本地老饕私藏的苍蝇馆子，人均 30 吃到扶墙出。',
+    views:12840, hot:9860, self:0,
+    entries:[
+      {n:'明婷饭店',s:4.8,p:'¥35',r:'脑花豆腐一绝，辣得过瘾，本地人排队都要吃',a:'锦江区水井坊街',e:'🍲',tags:['川菜','排队王']},
+      {n:'雨田饭店',s:4.7,p:'¥32',r:'莲藕炖排骨汤鲜掉眉毛，家常川菜天花板',a:'青羊区文殊院',e:'🥘',tags:['老字号','家常菜']},
+      {n:'康二姐串串香',s:4.6,p:'¥45',r:'秘制干碟香辣够味，牛肉粒必点',a:'武侯区玉林路',e:'🍢',tags:['串串','夜宵']},
+      {n:'文殊院素斋',s:4.6,p:'¥28',r:'清静禅意，素菜做出荤菜的满足感',a:'青羊区文殊院',e:'🥬',tags:['素食','清淡']},
+      {n:'小龙坎老火锅',s:4.5,p:'¥88',r:'牛油锅底越煮越香，毛肚脆嫩',a:'锦江区春熙路',e:'🍲',tags:['火锅','网红']},
+      {n:'甘食记肥肠粉',s:4.5,p:'¥18',r:'一碗肥肠粉配锅盔，成都人的早餐灵魂',a:'青羊区宽窄巷子',e:'🍜',tags:['小吃','早餐']},
+      {n:'钟水饺',s:4.4,p:'¥22',r:'红油抄手皮薄馅大，甜辣口经典',a:'锦江区总府路',e:'🥟',tags:['小吃','经典']},
+      {n:'贺记蛋烘糕',s:4.4,p:'¥12',r:'现烤蛋烘糕，奶油肉松双拼最好吃',a:'武侯区科华北路',e:'🧇',tags:['小吃','平价']},
+      {n:'陈麻婆豆腐',s:4.3,p:'¥40',r:'麻辣鲜香烫，百年老字号的正宗味道',a:'青羊区西玉龙街',e:'🍛',tags:['老字号','川菜']},
+      {n:'烤匠麻辣烤鱼',s:4.3,p:'¥95',r:'豆花烤鱼嫩滑入味，青花椒香麻上头',a:'锦江区太古里',e:'🐟',tags:['烤鱼','聚餐']}
+    ]
+  },
+  {
+    id:'s2', title:'成都最火的 8 家咖啡小馆', cat:'food', city:'成都', cover:'☕', grad:1,
+    desc:'出片+好喝两不误，成都年轻人的城市第三空间。',
+    views:8620, hot:6420, self:0,
+    entries:[
+      {n:'Manner Coffee',s:4.7,p:'¥22',r:'性价比之王，燕麦拿铁香浓顺滑',a:'锦江区春熙路',e:'☕',tags:['连锁','平价']},
+      {n:'Seesaw Coffee',s:4.6,p:'¥32',r:'创意特调好喝，空间设计感强',a:'锦江区太古里',e:'🥤',tags:['特调','设计']},
+      {n:'明谦咖啡',s:4.6,p:'¥28',r:'开了十年的老店，手冲豆子讲究',a:'武侯区玉林路',e:'☕',tags:['手冲','老店']},
+      {n:'Blue Bottle',s:4.5,p:'¥38',r:'冷萃口感干净，氛围安静适合办公',a:'高新区金融城',e:'🧋',tags:['办公','冷萃']},
+      {n:'拾光茶研所',s:4.5,p:'¥26',r:'新中式茶饮，乌龙拿铁清爽解腻',a:'青羊区宽窄巷子',e:'🍵',tags:['新中式','清爽']},
+      {n:'漫咖啡',s:4.4,p:'¥34',r:'大空间+简餐，适合待一下午',a:'武侯区科华北路',e:'☕',tags:['空间大','简餐']},
+      {n:'Costa Coffee',s:4.3,p:'¥30',r:'经典意式，商务会谈好去处',a:'锦江区IFS',e:'🥤',tags:['商务','经典']},
+      {n:'野鸽子咖啡',s:4.3,p:'¥24',r:'社区小店，老板娘人超好',a:'成华区建设路',e:'☕',tags:['社区','温馨']}
+    ]
+  },
+  {
+    id:'s3', title:'成都夜生活必去的 6 家酒吧', cat:'fun', city:'成都', cover:'🍸', grad:2,
+    desc:'从精酿小馆到江景露台，解锁成都的夜晚。',
+    views:7420, hot:5680, self:0,
+    entries:[
+      {n:'贰麻酒馆',s:4.7,p:'¥120',r:'川式蹦迪风，冷淡杯小酒配民谣现场',a:'锦江区九眼桥',e:'🍺',tags:['民谣','蹦迪']},
+      {n:'Hakkasan 露台',s:4.6,p:'¥260',r:'江景露台微醺看夜景，氛围感拉满',a:'锦江区兰桂坊',e:'🍸',tags:['露台','江景']},
+      {n:'高大师精酿',s:4.6,p:'¥95',r:'国产精酿之光，IPA 果香浓郁',a:'武侯区玉林路',e:'🍻',tags:['精酿','IPA']},
+      {n:'Mao Livehouse',s:4.5,p:'¥180',r:'成都摇滚地标，每周都有 live 演出',a:'成华区东郊记忆',e:'🎸',tags:['Livehouse','摇滚']},
+      {n:'Space 酒吧',s:4.5,p:'¥220',r:'高空视野看城南夜景，DJ 打碟很嗨',a:'高新区金融城',e:'🎧',tags:['高空','打碟']},
+      {n:'小酒馆',s:4.4,p:'¥80',r:'赵雷歌里的玉林路尽头，文艺气息浓',a:'武侯区玉林路',e:'🍶',tags:['文艺','老牌']}
+    ]
+  },
+  {
+    id:'s4', title:'成都周末遛娃好去处 TOP7', cat:'fun', city:'成都', cover:'🎡', grad:3,
+    desc:'从自然探索到科技馆，让孩子玩到不想回家。',
+    views:6210, hot:4820, self:0,
+    entries:[
+      {n:'成都大熊猫繁育研究基地',s:4.9,p:'¥55',r:'圆滚滚的国宝，早上看熊猫最活跃',a:'成华区熊猫大道',e:'🐼',tags:['必打卡','亲子']},
+      {n:'成都自然博物馆',s:4.8,p:'¥20',r:'恐龙化石震撼，科普互动做得好',a:'成华区理工大学',e:'🦕',tags:['科普','室内']},
+      {n:'成都欢乐谷',s:4.7,p:'¥230',r:'过山车+水世界，大孩子也玩疯',a:'金牛区茶店子',e:'🎢',tags:['游乐场','刺激']},
+      {n:'海昌极地海洋公园',s:4.6,p:'¥198',r:'白鲸表演超治愈，海底隧道出片',a:'双流区天府大道',e:'🐬',tags:['海洋馆','表演']},
+      {n:'成都科技馆',s:4.6,p:'¥0',r:'免费开放，机械与光影互动超好玩',a:'青羊区人民中路',e:'🔬',tags:['免费','科技']},
+      {n:'浣花溪公园',s:4.5,p:'¥0',r:'诗意园林，喂鱼逗鸭子遛弯好去处',a:'青羊区青华路',e:'🌳',tags:['公园','免费']},
+      {n:'融创乐园',s:4.4,p:'¥280',r:'滑雪+水上乐园，一天玩不够',a:'都江堰市',e:'⛷️',tags:['滑雪','水上']}
+    ]
+  },
+  {
+    id:'s5', title:'成都必打卡的 8 个文化地标', cat:'fun', city:'成都', cover:'🏛️', grad:8,
+    desc:'一座来了就不想走的城市，藏着多少故事。',
+    views:5940, hot:4210, self:0,
+    entries:[
+      {n:'宽窄巷子',s:4.6,p:'¥0',r:'青砖瓦墙老成都，喝茶掏耳朵看变脸',a:'青羊区同仁路',e:'🏮',tags:['地标','免费']},
+      {n:'武侯祠',s:4.7,p:'¥50',r:'三国文化圣地，红墙竹影拍照绝美',a:'武侯区武侯祠大街',e:'🏯',tags:['三国','古建']},
+      {n:'杜甫草堂',s:4.7,p:'¥50',r:'诗圣故居，园林清幽适合慢逛',a:'青羊区青华路',e:'🎋',tags:['诗词','园林']},
+      {n:'金沙遗址博物馆',s:4.7,p:'¥70',r:'三千年前古蜀文明，太阳神鸟震撼',a:'青羊区金沙遗址路',e:'🗿',tags:['博物馆','考古']},
+      {n:'锦里古街',s:4.5,p:'¥0',r:'夜景灯笼超美，小吃一条街吃到饱',a:'武侯区武侯祠大街',e:'🏮',tags:['古街','小吃']},
+      {n:'东郊记忆',s:4.6,p:'¥0',r:'工业风文创园，livehouse 与展览聚集地',a:'成华区建设南支路',e:'🎨',tags:['文创','出片']},
+      {n:'青羊宫',s:4.5,p:'¥10',r:'川西第一道观，香火鼎盛清静庄严',a:'青羊区一环路',e:'⛩️',tags:['道观','清静']},
+      {n:'四川博物院',s:4.8,p:'¥0',r:'免费看张大千真迹，巴蜀文物丰富',a:'青羊区浣花南路',e:'🏛️',tags:['免费','文物']}
+    ]
+  },
+  {
+    id:'s6', title:'成都人均 50 以下的宝藏小店', cat:'food', city:'成都', cover:'🍚', grad:5,
+    desc:'学生党打工人的快乐老家，好吃不贵。',
+    views:9130, hot:6890, self:0,
+    entries:[
+      {n:'米凉粉',s:4.7,p:'¥8',r:'冰凉爽滑，红油香辣过瘾',a:'锦江区水井坊',e:'🍜',tags:['小吃','超便宜']},
+      {n:'蛋烘糕（贺记）',s:4.6,p:'¥12',r:'现烤香软，奶油肉松经典搭配',a:'武侯区科华北路',e:'🧇',tags:['小吃','现烤']},
+      {n:'甜水面',s:4.6,p:'¥10',r:'面条粗壮有嚼劲，甜辣酱汁独特',a:'青羊区宽窄巷子',e:'🍝',tags:['面食','经典']},
+      {n:'老妈蹄花',s:4.5,p:'¥28',r:'炖得软烂脱骨，配蘸水一口一个',a:'锦江区三圣街',e:'🍖',tags:['老字号','炖菜']},
+      {n:'担担面',s:4.5,p:'¥15',r:'干拌香浓，臊子花生碎超香',a:'青羊区人民公园',e:'🍜',tags:['面食','干拌']},
+      {n:'冰粉',s:4.4,p:'¥10',r:'手搓冰粉带气泡，红糖配料丰富',a:'成华区建设路',e:'🍧',tags:['甜品','消暑']}
+    ]
+  }
+];
+
+/* ---------- state & 持久化 ---------- */
+const LS_KEY = 'rankplanet_v1';
+let state = {
+  city:'成都',
+  cat:'food',        // home 分类
+  rankCat:'all',     // 广场分类
+  view:'home',
+  ranks:[],
+  myLikes:{},        // "rankId::entryIdx": true
+  myFavs:{},         // rankId: true
+  viewCache:{}
+};
+
+function saveUser(){
+  localStorage.setItem(LS_KEY, JSON.stringify({
+    myLikes:state.myLikes, myFavs:state.myFavs,
+    userRanks:state.ranks.filter(r=>r.self)
+  }));
+}
+function loadUser(){
+  try{
+    const d = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+    state.myLikes = d.myLikes || {};
+    state.myFavs  = d.myFavs  || {};
+    const ur = (d.userRanks || []).map(r=>r);
+    state.ranks = JSON.parse(JSON.stringify(SEED)).map(r=>{
+      r.entries = r.entries.map(e=>({...e, likes: e.likes||0}));
+      return r;
+    });
+    ur.forEach(r=>{ r.self=1; r.entries=r.entries.map(e=>({...e,likes:e.likes||0})); state.ranks.unshift(r); });
+    // 恢复内置榜单的点赞数
+    const lk = state.myLikes;
+    Object.keys(lk).forEach(k=>{
+      const [rid,idx] = k.split('::');
+      const r = state.ranks.find(x=>x.id===rid);
+      if(r && r.entries[+idx]) r.entries[+idx].likes = (r.entries[+idx].likes||0)+1;
+    });
+  }catch(e){
+    state.ranks = JSON.parse(JSON.stringify(SEED)).map(r=>{r.entries=r.entries.map(e=>({...e,likes:0}));return r;});
+  }
+}
+
+/* ---------- 工具 ---------- */
+const $ = id => document.getElementById(id);
+function toast(msg){
+  const t=$('toast'); t.textContent=msg; t.classList.add('on');
+  clearTimeout(t._tm); t._tm=setTimeout(()=>t.classList.remove('on'),1600);
+}
+function fmtNum(n){ return n>=10000 ? (n/10000).toFixed(1)+'w' : String(n); }
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function gradOf(r){ return GRADS[(r.grad!==undefined?r.grad:0) % GRADS.length]; }
+function totalLikes(r){ return r.entries.reduce((a,e)=>a+(e.likes||0),0); }
+function hotOf(r){ return (r.hot||0) + totalLikes(r)*12 + (r.self?0:0); }
+function catName(c){ return c==='food'?'美食':'娱乐'; }
+
+/* ============================================================
+   视图路由
+   ============================================================ */
+function go(v, opts){
+  state.view = v;
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  const el = $('view-'+v); if(el) el.classList.add('active');
+  // tabbar 高亮（detail/search 不参与）
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.classList.toggle('on', t.dataset.tab===v);
+  });
+  // detail 页隐藏 tabbar（有自己的底部条）
+  const tb = $('tabbar');
+  tb.style.display = (v==='detail') ? 'none' : 'flex';
+  window.scrollTo(0,0);
+  if(v==='home'){ renderCats(); renderHome(); }
+  if(v==='rank'){ renderRankCat(); renderRankList(); }
+  if(v==='me'){ renderMe(); }
+  if(v==='pub'){ if(!$('entryEditors').children.length) addEntry(); }
+  if(v==='search'){ setTimeout(()=>$('searchInput').focus(),120); }
+}
+
+/* ============================================================
+   首页
+   ============================================================ */
+const HOME_CATS = [
+  {k:'food', n:'🍜 美食'},
+  {k:'fun',  n:'🎬 娱乐'},
+  {k:'all',  n:'🔥 全部'}
+];
+function renderCats(){
+  $('homeCats').innerHTML = HOME_CATS.map(c=>
+    `<div class="chip ${state.cat===c.k?'on':''}" onclick="setCat('${c.k}')">${c.n}</div>`
+  ).join('');
+}
+function setCat(k){ state.cat=k; renderCats(); renderHome(); }
+
+function ranksForHome(){
+  let list = state.ranks.filter(r=>r.city===state.city);
+  if(state.cat!=='all') list = list.filter(r=>r.cat===state.cat);
+  // 若该城市无数据，退回展示该分类全部城市（避免空白）
+  if(!list.length){
+    list = state.ranks.filter(r=> state.cat==='all' ? true : r.cat===state.cat);
+  }
+  return list.sort((a,b)=>hotOf(b)-hotOf(a));
+}
+function renderHome(){
+  $('homeCity').textContent = state.city;
+  $('heroSub').textContent = `${state.city} · 发现身边最值得去的美食与玩乐`;
+  const list = ranksForHome();
+  const catLabel = state.cat==='all' ? '热门' : catName(state.cat);
+  $('listTitle').textContent = `🔥 ${catLabel}榜单`;
+  $('listCount').textContent = `共 ${list.length} 个榜单`;
+  if(!list.length){
+    $('homeList').innerHTML = `<div class="empty"><div class="e-ico">🗺️</div><div class="e-txt">这里还没有榜单，快去发布第一个吧～</div></div>`;
+    return;
+  }
+  $('homeList').innerHTML = list.map(r=>`
+    <div class="rank-card" onclick="openDetail('${r.id}')">
+      <div class="rc-cover" style="background:${gradOf(r)}">
+        <span>${r.cover||'📋'}</span>
+        <span class="rc-badge">🏅 TOP${r.entries.length}</span>
+        <span class="rc-cat">${catName(r.cat)}</span>
+      </div>
+      <div class="rc-body">
+        <div class="rc-name">${esc(r.title)}</div>
+        <div class="rc-desc">${esc(r.desc||'')}</div>
+        <div class="rc-meta">
+          <span>👀 ${fmtNum(r.views||0)}</span>
+          <span class="rc-hot">🔥 ${fmtNum(hotOf(r))}</span>
+          <span>❤️ ${totalLikes(r)}</span>
+          <span>📍 ${esc(r.city)}</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+/* ============================================================
+   榜单广场
+   ============================================================ */
+const RANK_CATS = [
+  {k:'all',  n:'全部'},
+  {k:'food', n:'🍜 美食'},
+  {k:'fun',  n:'🎬 娱乐'}
+];
+function renderRankCat(){
+  $('rankCats').innerHTML = RANK_CATS.map(c=>
+    `<div class="chip ${state.rankCat===c.k?'on':''}" onclick="setRankCat('${c.k}')">${c.n}</div>`
+  ).join('');
+}
+function setRankCat(k){ state.rankCat=k; renderRankCat(); renderRankList(); }
+function renderRankList(){
+  const list = state.ranks.filter(r=> state.rankCat==='all' || r.cat===state.rankCat)
+                         .sort((a,b)=>hotOf(b)-hotOf(a));
+  if(!list.length){ $('rankList').innerHTML = `<div class="empty"><div class="e-ico">🏆</div><div class="e-txt">暂无榜单</div></div>`; return; }
+  $('rankList').innerHTML = list.map((r,i)=>`
+    <div class="lead-item" onclick="openDetail('${r.id}')">
+      <div class="lead-rank ${i>2?'gray':''}">${i+1}</div>
+      <div class="entry-thumb" style="background:${gradOf(r)};width:46px;height:46px;font-size:22px;">${r.cover||'📋'}</div>
+      <div class="lead-info">
+        <div class="ln">${esc(r.title)}</div>
+        <div class="ls">${catName(r.cat)} · ${esc(r.city)} · 上榜 ${r.entries.length} 家</div>
+      </div>
+      <div class="lead-hot">🔥<br>${fmtNum(hotOf(r))}</div>
+    </div>`).join('');
+}
+
+/* ============================================================
+   榜单详情
+   ============================================================ */
+let curRankId = null;
+function openDetail(id, opts){
+  curRankId = id;
+  const r = state.ranks.find(x=>x.id===id);
+  if(!r) return;
+  if(!opts || !opts.keepViews) r.views = (r.views||0)+1;
+  const faved = !!state.myFavs[id];
+  const entryHtml = r.entries.map((e,idx)=>{
+    const key = id+'::'+idx;
+    const liked = !!state.myLikes[key];
+    const no = idx+1;
+    const cls = no<=3 ? 'entry-top3' : '';
+    const noCls = no===1?'no1':no===2?'no2':no===3?'no3':'';
+    return `
+    <div class="entry ${cls}">
+      <div class="entry-no ${noCls}">${no}</div>
+      <div class="entry-thumb" style="background:${gradOf({grad:(r.grad+idx)%GRADS.length})}">${e.e||'🍽️'}</div>
+      <div class="entry-info">
+        <div class="entry-name">${esc(e.n)} <span class="entry-score">★${e.s}</span></div>
+        <div class="entry-tags">
+          ${(e.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}
+          ${e.p?`<span class="tag gray">人均 ${esc(e.p)}</span>`:''}
+        </div>
+        <div class="entry-reason">${esc(e.r||'')}</div>
+        ${e.a?`<div class="entry-addr">📍 ${esc(e.a)}</div>`:''}
+      </div>
+      <button class="like-btn ${liked?'on':''}" onclick="toggleLike('${id}',${idx},event)">
+        <span class="heart">${liked?'❤️':'🤍'}</span>
+        <span class="cnt">${e.likes||0}</span>
+      </button>
+    </div>`;
+  }).join('');
+
+  $('detailBody').innerHTML = `
+    <div class="detail-hero" style="background:${gradOf(r)}">
+      <div class="dh-mask"></div>
+      <div class="dh-emoji">${r.cover||'📋'}</div>
+      <div class="dh-txt">
+        <h2>${esc(r.title)}</h2>
+        <div class="dh-meta">
+          <span>🏅 共 ${r.entries.length} 家上榜</span>
+          <span>👀 ${fmtNum(r.views||0)}</span>
+          <span>❤️ ${totalLikes(r)}</span>
+        </div>
+      </div>
+    </div>
+    <button class="back-btn" onclick="go('home')">‹</button>
+    <div class="detail-desc">${esc(r.desc||'暂无简介')}
+      <div style="margin-top:8px;color:var(--text-3);font-size:11.5px;">📍 ${esc(r.city)} · ${catName(r.cat)}榜 · ${r.self?'由我发布':'榜单星球'}</div>
+    </div>
+    <div class="sec-title"><h3>榜单排名</h3><span class="more">按名次排列</span></div>
+    <div class="entry-list">${entryHtml}</div>
+  `;
+  const fb = $('favBtn');
+  fb.classList.toggle('on', faved);
+  fb.innerHTML = faved ? '<span>⭐</span><span>已收藏</span>' : '<span>⭐</span><span>收藏</span>';
+  go('detail');
+  // detail 后重新滚动到顶部（go 已做）
+}
+
+function toggleLike(rid, idx, ev){
+  if(ev) ev.stopPropagation();
+  const key = rid+'::'+idx;
+  const r = state.ranks.find(x=>x.id===rid); if(!r) return;
+  const e = r.entries[idx]; if(!e) return;
+  if(state.myLikes[key]){
+    delete state.myLikes[key];
+    e.likes = Math.max(0,(e.likes||0)-1);
+  }else{
+    state.myLikes[key] = true;
+    e.likes = (e.likes||0)+1;
+  }
+  saveUser();
+  // 局部更新：只改当前按钮与头部点赞数，不整页重绘（保持滚动位置）
+  const btn = ev && ev.currentTarget ? ev.currentTarget : null;
+  if(btn){
+    const liked = !!state.myLikes[key];
+    btn.classList.toggle('on', liked);
+    btn.querySelector('.heart').textContent = liked ? '❤️' : '🤍';
+    btn.querySelector('.cnt').textContent = e.likes;
+  }
+  const total = totalLikes(r);
+  document.querySelectorAll('#detailBody .dh-meta span').forEach(sp=>{
+    if(sp.textContent.includes('❤')) sp.textContent = '❤️ '+total;
+  });
+}
+function toggleFav(){
+  const id = curRankId; if(!id) return;
+  if(state.myFavs[id]){ delete state.myFavs[id]; toast('已取消收藏'); }
+  else{ state.myFavs[id]=true; toast('已收藏该榜单 ⭐'); }
+  saveUser();
+  const fb=$('favBtn');
+  const on=!!state.myFavs[id];
+  fb.classList.toggle('on',on);
+  fb.innerHTML = on ? '<span>⭐</span><span>已收藏</span>' : '<span>⭐</span><span>收藏</span>';
+}
+
+/* ============================================================
+   搜索
+   ============================================================ */
+function focusSearch(){ go('search'); }
+function doSearch(){
+  const q = $('searchInput').value.trim().toLowerCase();
+  const box = $('searchResult');
+  if(!q){ box.innerHTML = `<div class="empty"><div class="e-ico">🔍</div><div class="e-txt">输入榜单名、店铺名或城市开始搜索</div></div>`; return; }
+  const rankHits = state.ranks.filter(r=>
+    r.title.toLowerCase().includes(q) || r.city.toLowerCase().includes(q) ||
+    r.desc.toLowerCase().includes(q) ||
+    r.entries.some(e=> e.n.toLowerCase().includes(q))
+  );
+  let entryHits = [];
+  state.ranks.forEach(r=> r.entries.forEach((e,idx)=>{
+    if(e.n.toLowerCase().includes(q) || (e.tags||[]).join('').toLowerCase().includes(q)){
+      entryHits.push({r,e,idx});
+    }
+  }));
+  let html = '';
+  if(rankHits.length){
+    html += `<div class="sec-title"><h3>相关榜单</h3><span class="more">${rankHits.length} 个</span></div><div class="list">`;
+    html += rankHits.map(r=>`
+      <div class="rank-card" onclick="openDetail('${r.id}')">
+        <div class="rc-cover" style="height:74px;background:${gradOf(r)}">
+          <span style="font-size:30px;">${r.cover||'📋'}</span>
+          <span class="rc-cat">${catName(r.cat)}</span>
+        </div>
+        <div class="rc-body" style="padding:10px 13px 12px;">
+          <div class="rc-name" style="font-size:14.5px;">${esc(r.title)}</div>
+          <div class="rc-meta" style="margin-top:7px;"><span>📍 ${esc(r.city)}</span><span>🏅 ${r.entries.length} 家</span><span class="rc-hot">🔥 ${fmtNum(hotOf(r))}</span></div>
+        </div>
+      </div>`).join('');
+    html += `</div>`;
+  }
+  if(entryHits.length){
+    html += `<div class="sec-title"><h3>相关店铺</h3><span class="more">${entryHits.length} 家</span></div><div class="list">`;
+    html += entryHits.slice(0,20).map(h=>`
+      <div class="entry" onclick="openDetail('${h.r.id}')">
+        <div class="entry-thumb" style="background:${gradOf({grad:(h.r.grad+h.idx)%GRADS.length})}">${h.e.e||'🍽️'}</div>
+        <div class="entry-info">
+          <div class="entry-name">${esc(h.e.n)} <span class="entry-score">★${h.e.s}</span></div>
+          <div class="entry-reason">${esc(h.e.r||'')}</div>
+          <div class="entry-addr">📍 ${esc(h.r.city)} · 出自《${esc(h.r.title)}》</div>
+        </div>
+      </div>`).join('');
+    html += `</div>`;
+  }
+  if(!rankHits.length && !entryHits.length){
+    html = `<div class="empty"><div class="e-ico">😅</div><div class="e-txt">没有找到「${esc(q)}」相关的榜单或店铺</div></div>`;
+  }
+  box.innerHTML = html;
+}
+
+/* ============================================================
+   我的
+   ============================================================ */
+function renderMe(){
+  $('stPub').textContent  = state.ranks.filter(r=>r.self).length;
+  $('stLike').textContent = Object.keys(state.myLikes).length;
+  $('stFav').textContent  = Object.keys(state.myFavs).length;
+}
+function showMine(type){
+  let list = [], title='';
+  if(type==='pub'){ list = state.ranks.filter(r=>r.self); title='我发布的榜单'; }
+  if(type==='fav'){ list = state.ranks.filter(r=>state.myFavs[r.id]); title='我收藏的榜单'; }
+  if(type==='like'){
+    const ids = new Set(Object.keys(state.myLikes).map(k=>k.split('::')[0]));
+    list = state.ranks.filter(r=>ids.has(r.id)); title='我点赞过的榜单';
+  }
+  const box = $('mineList');
+  if(!list.length){
+    box.innerHTML = `<div class="sec-title"><h3>${title}</h3></div><div class="empty"><div class="e-ico">📭</div><div class="e-txt">还没有${title.replace('我','')}哦</div></div>`;
+    return;
+  }
+  box.innerHTML = `<div class="sec-title"><h3>${title}</h3><span class="more">${list.length} 个</span></div><div class="list">`+
+    list.map(r=>`
+      <div class="rank-card" onclick="openDetail('${r.id}')">
+        <div class="rc-cover" style="height:74px;background:${gradOf(r)}">
+          <span style="font-size:30px;">${r.cover||'📋'}</span>
+          <span class="rc-cat">${catName(r.cat)}</span>
+        </div>
+        <div class="rc-body" style="padding:10px 13px 12px;">
+          <div class="rc-name" style="font-size:14.5px;">${esc(r.title)}</div>
+          <div class="rc-meta" style="margin-top:7px;"><span>📍 ${esc(r.city)}</span><span>🏅 ${r.entries.length} 家</span><span class="rc-hot">🔥 ${fmtNum(hotOf(r))}</span></div>
+        </div>
+      </div>`).join('')+`</div>`;
+}
+function clearAll(){
+  if(!confirm('确定清除本地数据吗？\n（你发布的榜单、点赞与收藏都会被删除，内置榜单不受影响）')) return;
+  localStorage.removeItem(LS_KEY);
+  state.myLikes={}; state.myFavs={}; state.ranks=[];
+  loadUser(); renderMe(); $('mineList').innerHTML='';
+  toast('已清除本地数据');
+}
+
+/* ============================================================
+   发布
+   ============================================================ */
+let entrySeq = 0;
+function pickSeg(el){
+  el.parentNode.querySelectorAll('.seg-item').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on');
+}
+function addEntry(){
+  entrySeq++;
+  const id = 'ee'+entrySeq;
+  const wrap = document.createElement('div');
+  wrap.className='entry-editor';
+  wrap.id = id;
+  wrap.innerHTML = `
+    <button class="del" onclick="delEntry('${id}')">✕</button>
+    <div class="form-label" style="margin-bottom:8px;">第 <span class="seqNo"></span> 名</div>
+    <div class="ee-row"><input class="f-input" data-k="n" placeholder="店铺/项目名称 *"></div>
+    <div class="ee-row">
+      <input class="f-input sm" data-k="s" placeholder="评分 4.5" value="4.5">
+      <input class="f-input sm" data-k="p" placeholder="人均 ¥50">
+      <input class="f-input" data-k="e" placeholder="图标 如 🍜" value="🍜" style="flex:0 0 70px;">
+    </div>
+    <div class="ee-row"><input class="f-input" data-k="r" placeholder="上榜理由（一句推荐语）"></div>
+    <div class="ee-row"><input class="f-input" data-k="a" placeholder="地址/区域"></div>
+    <div class="ee-row"><input class="f-input" data-k="tags" placeholder="标签，用逗号分隔，如：火锅,夜宵"></div>
+  `;
+  $('entryEditors').appendChild(wrap);
+  renumber();
+}
+function delEntry(id){
+  const el=$(id); if(el) el.remove();
+  renumber();
+}
+function renumber(){
+  const kids = $('entryEditors').children;
+  for(let i=0;i<kids.length;i++){
+    const s = kids[i].querySelector('.seqNo'); if(s) s.textContent = i+1;
+  }
+}
+function submitRank(){
+  const title = $('pubTitle').value.trim();
+  const city  = $('pubCity').value.trim() || '成都';
+  const desc  = $('pubDesc').value.trim();
+  const catEl = $('pubCat').querySelector('.seg-item.on');
+  const cat   = catEl ? catEl.dataset.v : 'food';
+
+  if(!title){ toast('请填写榜单标题'); return; }
+
+  const eds = $('entryEditors').children;
+  const entries = [];
+  for(let i=0;i<eds.length;i++){
+    const get = k => eds[i].querySelector(`[data-k="${k}"]`).value.trim();
+    const n = get('n');
+    if(!n) continue;
+    const tags = get('tags') ? get('tags').split(/[,，]/).map(x=>x.trim()).filter(Boolean) : ['推荐'];
+    entries.push({
+      n, s: get('s')||'4.5', p: get('p'), r: get('r')||'值得一试～',
+      a: get('a'), e: get('e')||'🍽️', tags, likes:0
+    });
+  }
+  if(!entries.length){ toast('请至少填写 1 个上榜项目'); return; }
+
+  const id = 'u'+Date.now();
+  state.ranks.unshift({
+    id, title, cat, city, desc: desc||'这是我私藏的同城好去处，分享给大家～',
+    cover: cat==='food'?'🍜':'🎬',
+    grad: Math.floor(Math.random()*GRADS.length),
+    views: 0, hot: 500, self:1, entries
+  });
+  saveUser();
+  toast('发布成功！🎉');
+  // 重置表单
+  $('pubTitle').value=''; $('pubDesc').value='';
+  $('entryEditors').innerHTML=''; addEntry();
+  state.cat = cat; state.city = city;
+  setTimeout(()=>{ go('home'); }, 500);
+}
+
+/* ============================================================
+   城市选择
+   ============================================================ */
+function openCity(){
+  $('cityGrid').innerHTML = CITIES.map(c=>
+    `<div class="city-item ${state.city===c?'on':''}" onclick="pickCity('${c}')">${c}</div>`
+  ).join('');
+  $('mask').classList.add('on'); $('sheet').classList.add('on');
+}
+function closeCity(){ $('mask').classList.remove('on'); $('sheet').classList.remove('on'); }
+function pickCity(c){
+  state.city = c;
+  closeCity();
+  if(state.view==='home'){ renderHome(); }
+  else { go('home'); }
+  toast('已切换到 '+c);
+}
+
+/* ============================================================
+   启动
+   ============================================================ */
+loadUser();
+renderCats();
+renderHome();
+// 首页搜索框点击跳转搜索页（readonly）
+$('homeSearch').addEventListener('click', focusSearch);
+</script>
+</body>
+</html>
