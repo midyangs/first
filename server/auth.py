@@ -14,14 +14,15 @@ import secrets
 
 from fastapi import Header, HTTPException, Depends
 
+import config
 from database import get_conn
 
-TOKEN_TTL = 24 * 3600  # token 有效期 24 小时
+TOKEN_TTL = config.TOKEN_TTL  # token 有效期（默认 24 小时，可用环境变量覆盖）
 PBKDF2_ROUNDS = 120_000
 
-# 默认管理员账号（仅首次初始化时创建）
-DEFAULT_ADMIN = "admin"
-DEFAULT_ADMIN_PWD = "admin123"
+# 默认管理员账号（由环境变量 ADMIN_USER / ADMIN_PASSWORD 决定，仅首次初始化时创建）
+DEFAULT_ADMIN = config.ADMIN_USER
+DEFAULT_ADMIN_PWD = config.ADMIN_PASSWORD
 
 
 # ---------------------------------------------------------------- 密码哈希

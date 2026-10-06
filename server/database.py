@@ -12,10 +12,12 @@ import sqlite3
 import json
 from contextlib import contextmanager
 
-# 数据库文件放在项目根目录的 data/ 下
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_DIR = os.path.join(BASE_DIR, "data")
-DB_PATH = os.path.join(DB_DIR, "rankplanet.db")
+import config
+
+# 数据库文件路径由 config 统一管理（支持 DB_PATH 环境变量覆盖）
+BASE_DIR = config.BASE_DIR
+DB_PATH = config.DB_PATH
+DB_DIR = os.path.dirname(DB_PATH)
 
 
 def _ensure_dir():

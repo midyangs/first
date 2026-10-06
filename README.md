@@ -8,6 +8,8 @@
 
 ## 一、快速开始
 
+> ☁️ **要部署到云服务器？** 跳到 [docs/DEPLOY.md](docs/DEPLOY.md)，`./deploy.sh` 一条命令搞定。
+
 ### 方式 1：直接打开（最简单）
 
 双击 `src/同城榜单.html`，用浏览器打开即可，无需任何环境。
@@ -31,20 +33,27 @@ python3 -m http.server 8899
 ├── README.md              项目说明（本文件）
 ├── CHANGELOG.md           版本变更记录
 ├── .gitignore             忽略规则
+├── Dockerfile             ★ Docker 镜像构建
+├── docker-compose.yml     ★ 服务编排（端口/卷/健康检查）
+├── .env.example           ★ 部署配置模板（复制为 .env 使用）
+├── deploy.sh              ★ 一键部署脚本
 ├── src/
 │   └── 同城榜单.html       前端应用（HTML + CSS + JS 单文件）
 ├── server/                ★ 管理后端（FastAPI + SQLite）
-│   ├── main.py            API 路由（公开接口 + 管理接口）
+│   ├── main.py            API 路由（公开接口 + 管理接口 + 前端托管）
+│   ├── config.py          环境变量配置中心
 │   ├── database.py        SQLite 连接与建表
 │   ├── auth.py            密码哈希与 Token 鉴权
 │   ├── seed.py            示例数据初始化
+│   ├── entrypoint.sh      容器入口（卷权限修正 + 降权）
 │   ├── static/admin.html  可视化管理后台
 │   └── requirements.txt
 ├── data/
 │   └── rankplanet.db      SQLite 数据库（运行后生成，已 gitignore）
 └── docs/
     ├── DEV.md             前端开发与二次开发指南
-    └── API.md             后端 API 接口文档
+    ├── API.md             后端 API 接口文档
+    └── DEPLOY.md          ★ 云服务器一键部署手册
 ```
 
 **为什么用单文件？** 便于分发、双击即用、无构建步骤、无依赖风险。若后期要工程化拆分，参见 `docs/DEV.md` 的重构建议。

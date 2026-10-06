@@ -4,6 +4,38 @@
 
 ---
 
+## [2.1.0] - 2026-10-06
+
+### ✨ 新增（一键部署）
+
+- **Docker 一键部署**：`Dockerfile`（python:3.11-slim，非 root 运行，自带健康检查）、`docker-compose.yml`（端口/卷挂载/日志轮转）
+- **一键部署脚本** `deploy.sh`：`deploy` / `update` / `restart` / `logs` / `status` / `stop` / `backup` / `password` / `uninstall` 子命令，彩色输出、首次部署自动生成**随机管理员密码**
+- **配置外置** `.env.example`：端口、管理员账号密码、Token 有效期、种子数据开关全部可通过环境变量覆盖；新增 `server/config.py` 集中管理
+- **后端托管前端**：容器部署后单端口同时提供小程序页面（`/`）、管理后台（`/admin`）、API 与文档（`/docs`）
+- **健康检查接口** `GET /api/health`：返回服务与数据库状态，供 Docker healthcheck 与云平台探活
+- **部署手册** `docs/DEPLOY.md`：服务器选购、Docker 安装、上传、部署、**安全组放行**、配置修改、备份恢复、域名 HTTPS、常见问题
+
+### 🐛 修复
+
+- **修复挂载卷权限导致的数据库只读问题**：容器内以 `entrypoint.sh` 先修正 `/app/data` 属主，再通过 `setpriv` 降权为 `appuser` 运行（此前宿主机 `./data` 属 root 时报 `attempt to write a readonly database`）
+- **修复端口变量语义冲突**：`PORT` 现仅表示宿主机对外端口，容器内固定监听 8000（`INTERNAL_PORT`），改动外部端口不再导致映射与监听不一致
+
+### 🔒 安全
+
+- 首次部署自动生成随机密码，避免默认弱密码上公网
+- 容器进程以非 root 用户 `appuser` 运行
+- `.env` 加入 `.gitignore` 不入库，仅提交 `.env.example` 模板
+
+### 📦 部署验证
+
+- `docker compose build` + `up` 全流程实测通过
+- 前端 `/`、后台 `/admin`、文档 `/docs`、健康检查均返回 200
+- 环境变量密码生效（默认密码登录失败）
+- 容器销毁重建后数据保留（卷挂载持久化）
+- 自定义端口（8081）映射验证通过
+
+---
+
 ## [2.0.0] - 2026-10-06
 
 ### ✨ 新增

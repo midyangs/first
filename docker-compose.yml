@@ -1,0 +1,41 @@
+# ============================================================
+# 榜单星球 · 一键部署编排
+# 使用： docker compose up -d --build
+# 或直接执行： ./deploy.sh
+# ============================================================
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: rankplanet:latest
+    container_name: rankplanet
+    restart: unless-stopped
+
+    # 端口映射：宿主机 PORT（.env 可改）→ 容器固定 8000
+    ports:
+      - "${PORT:-8000}:8000"
+
+    # 配置注入（首次部署会自动从 .env.example 复制生成 .env）
+    env_file:
+      - .env
+
+    environment:
+      TZ: Asia/Shanghai
+
+    # 数据持久化：数据库落在宿主机 ./data，容器重建不丢数据
+    volumes:
+      - ./data:/app/data
+
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

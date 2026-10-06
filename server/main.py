@@ -37,36 +37,46 @@ import time
 from typing import Optional, List
 
 from fastapi import FastAPI, HTTPException, Header, Depends, Query, Request
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+import config
 import database as db
 from database import get_conn, init_db, row_to_rank, row_to_entry
 from seed import bootstrap, CITIES
 import auth as auth_mod
 from auth import admin_required, verify_password, issue_token, revoke_token, change_password
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIC_DIR = os.path.join(BASE_DIR, "static")
+BASE_DIR = config.BASE_DIR
+SERVER_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(SERVER_DIR, "static")
+# 前端页面（部署时由本服务一并托管，只需暴露一个端口）
+FRONTEND_HTML = os.path.join(BASE_DIR, "src", "同城榜单.html")
 
 app = FastAPI(
-    title="榜单星球 管理后端",
-    description="同城榜单小程序配套后端：榜单管理、点赞投票、内容审核、数据统计",
-    version="1.0.0",
+    title="榜单星球 后端服务",
+    description="同城榜单小程序 + 管理后台 + API：榜单管理、点赞投票、内容审核、数据统计",
+    version="2.0.0",
 )
 
 # 启动时自动初始化数据库（建表 + 示例数据 + 默认管理员）
 @app.on_event("startup")
 def _startup():
     info = bootstrap()
-    print("=" * 52)
+    print("=" * 56)
     print(" 榜单星球 后端已启动")
     print(f"  数据库: {db.DB_PATH}")
     print(f"  初始化数据: {'已导入示例榜单' if info['seeded'] else '已有数据，跳过'}")
-    print(f"  默认管理员: {auth_mod.DEFAULT_ADMIN} / {auth_mod.DEFAULT_ADMIN_PWD}"
-          if info["admin_created"] else "  管理员账号已存在")
-    print("=" * 52)
+    if info["admin_created"]:
+        print(f"  初始管理员: {auth_mod.DEFAULT_ADMIN} / {auth_mod.DEFAULT_ADMIN_PWD}")
+        if config.USING_DEFAULT_PASSWORD:
+            print("  ⚠ 警告: 正在使用默认密码 admin123，请尽快在后台修改！")
+    else:
+        print("  管理员账号已存在（沿用原有密码）")
+    print(f"  前端页面: http://0.0.0.0:{config.INTERNAL_PORT}/")
+    print(f"  管理后台: http://0.0.0.0:{config.INTERNAL_PORT}/admin")
+    print("=" * 56)
 
 
 # ================================================================ 工具
@@ -526,8 +536,37 @@ def admin_set_status(rank_id: str, payload: StatusIn, admin=Depends(admin_requir
     return {"ok": True, "status": payload.status}
 
 
-# ================================================================ 后台页面 & 静态资源
-@app.get("/admin", response_class=HTMLResponse, tags=["后台"], summary="管理后台页面")
+# ================================================================ 健康检查 & 页面
+@app.get("/api/health", tags=["公开接口"], summary="健康检查")
+def health():
+    """供容器健康检查与云平台探活使用。"""
+    db_ok = True
+    try:
+        with get_conn() as conn:
+            conn.execute("SELECT 1 FROM ranks LIMIT 1")
+    except Exception:
+        db_ok = False
+    status = "ok" if db_ok else "degraded"
+    return JSONResponse(
+        {"status": status, "db": db_ok, "version": app.version},
+        status_code=200 if db_ok else 503,
+    )
+
+
+@app.get("/", response_class=HTMLResponse, tags=["页面"], summary="小程序首页")
+def frontend_page():
+    """返回前端「同城榜单」小程序页面。"""
+    if not os.path.exists(FRONTEND_HTML):
+        return HTMLResponse(
+            "<h1>前端页面缺失</h1><p>未找到 src/同城榜单.html</p>"
+            '<p><a href="/admin">进入管理后台</a></p>',
+            status_code=500,
+        )
+    with open(FRONTEND_HTML, encoding="utf-8") as f:
+        return HTMLResponse(f.read())
+
+
+@app.get("/admin", response_class=HTMLResponse, tags=["页面"], summary="管理后台页面")
 def admin_page():
     path = os.path.join(STATIC_DIR, "admin.html")
     if not os.path.exists(path):
@@ -536,10 +575,6 @@ def admin_page():
         return HTMLResponse(f.read())
 
 
-@app.get("/", tags=["后台"], summary="根路径跳转后台")
-def root():
-    return HTMLResponse('<meta http-equiv="refresh" content="0;url=/admin">')
-
-
+# ================================================================ 静态资源
 if os.path.isdir(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
