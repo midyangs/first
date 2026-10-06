@@ -32,16 +32,47 @@ python3 -m http.server 8899
 ├── CHANGELOG.md           版本变更记录
 ├── .gitignore             忽略规则
 ├── src/
-│   └── 同城榜单.html       应用全部代码（HTML + CSS + JS 单文件）
+│   └── 同城榜单.html       前端应用（HTML + CSS + JS 单文件）
+├── server/                ★ 管理后端（FastAPI + SQLite）
+│   ├── main.py            API 路由（公开接口 + 管理接口）
+│   ├── database.py        SQLite 连接与建表
+│   ├── auth.py            密码哈希与 Token 鉴权
+│   ├── seed.py            示例数据初始化
+│   ├── static/admin.html  可视化管理后台
+│   └── requirements.txt
+├── data/
+│   └── rankplanet.db      SQLite 数据库（运行后生成，已 gitignore）
 └── docs/
-    └── DEV.md             开发与二次开发指南
+    ├── DEV.md             前端开发与二次开发指南
+    └── API.md             后端 API 接口文档
 ```
 
 **为什么用单文件？** 便于分发、双击即用、无构建步骤、无依赖风险。若后期要工程化拆分，参见 `docs/DEV.md` 的重构建议。
 
 ---
 
-## 三、功能清单
+## 三、管理后端（v2.0 新增）
+
+```bash
+cd server
+pip3 install -r requirements.txt
+python3 -m uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+| 入口 | 地址 |
+|---|---|
+| 管理后台 | http://localhost:8000/admin （默认账号 `admin` / `admin123`） |
+| API 文档 | http://localhost:8000/docs （Swagger 交互式） |
+
+功能：数据总览（9 项统计 + 7 日趋势图）、榜单增删改查、用户内容审核（通过/驳回）、内容检索、修改密码。
+
+首次启动自动建表并导入 6 份示例榜单。接口详情见 `docs/API.md`。
+
+---
+
+---
+
+## 四、功能清单
 
 | 模块 | 功能 |
 |---|---|
@@ -54,7 +85,7 @@ python3 -m http.server 8899
 
 ---
 
-## 四、技术栈
+## 五、技术栈
 
 - **HTML5 + CSS3 + 原生 JavaScript (ES6)**，无任何框架、无 CDN 依赖
 - **数据持久化**：`localStorage`，键名 `rankplanet_v1`
@@ -64,7 +95,7 @@ python3 -m http.server 8899
 
 ---
 
-## 五、数据说明
+## 六、数据说明
 
 ### 内置示例数据（`SEED`）
 
@@ -93,7 +124,7 @@ python3 -m http.server 8899
 
 ---
 
-## 六、版本管理
+## 七、版本管理
 
 本项目已纳入 Git 管理。
 
@@ -112,13 +143,15 @@ git add -A && git commit -m "feat: xxx"
 
 ---
 
-## 七、后续演进方向
+## 八、后续演进方向
 
-- [ ] 接入后端（云开发 / LeanCloud / Supabase），实现多用户共享榜单数据
+- [x] ~~接入后端实现多用户共享榜单数据~~（v2.0 已完成 FastAPI 后端）
+- [ ] **前端对接后端 API**：将 `src/同城榜单.html` 的 localStorage 数据层替换为 `fetch` 调用（字段已对齐，改 `loadUser/saveUser` 即可）
 - [ ] 用户系统：注册登录、头像昵称、关注他人榜单
 - [ ] 图片上传（当前为 emoji + 渐变占位）
 - [ ] 榜单评论、分享海报生成
 - [ ] 迁移为**微信小程序**源码结构（WXML/WXSS/JS）
 - [ ] 榜单排序算法优化（当前为热度加权：`hot + 总点赞×12`）
+- [ ] 生产部署：HTTPS、Gunicorn/Uvicorn 多 worker、数据库定期备份
 
-详细开发指引见 `docs/DEV.md`。
+详细开发指引见 `docs/DEV.md`，接口说明见 `docs/API.md`。

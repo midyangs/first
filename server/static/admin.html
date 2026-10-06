@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>榜单星球 · 管理后台</title>
+<style>
+:root{
+  --primary:#FF6B00; --primary-grad:linear-gradient(135deg,#FF8A00,#FF5E00);
+  --primary-pale:#FFF4EC; --text:#1A1A1A; --text-2:#666; --text-3:#999;
+  --line:#EEE; --bg:#F5F6F8; --card:#fff; --green:#00B578; --red:#FF3B30;
+  --yellow:#FF9F0A; --radius:12px; --shadow:0 2px 10px rgba(0,0,0,.06);
+  --sidebar:224px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;}
+button{font-family:inherit;border:none;background:none;cursor:pointer;color:inherit;}
+input,select,textarea{font-family:inherit;font-size:14px;outline:none;border:none;background:none;color:inherit;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:#D5D8DD;border-radius:4px;}
+a{color:var(--primary);text-decoration:none;}
+
+/* ---------- 登录 ---------- */
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:var(--primary-grad);padding:20px;}
+.login-box{background:#fff;border-radius:18px;padding:38px 34px;width:100%;max-width:390px;
+  box-shadow:0 20px 60px rgba(0,0,0,.22);}
+.login-logo{font-size:40px;text-align:center;margin-bottom:6px;}
+.login-box h1{font-size:21px;font-weight:800;text-align:center;}
+.login-box .sub{text-align:center;color:var(--text-3);font-size:12.5px;margin:8px 0 26px;}
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:12.5px;font-weight:700;margin-bottom:7px;color:var(--text-2);}
+.field input{width:100%;background:var(--bg);border-radius:10px;padding:12px 14px;font-size:14px;}
+.field input:focus{background:var(--primary-pale);}
+.btn-primary{width:100%;height:46px;border-radius:10px;background:var(--primary-grad);color:#fff;
+  font-weight:800;font-size:15px;box-shadow:0 6px 16px rgba(255,107,0,.3);transition:.15s;}
+.btn-primary:hover{opacity:.9;} .btn-primary:active{transform:scale(.99);}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed;}
+.login-tip{margin-top:16px;font-size:12px;color:var(--text-3);text-align:center;line-height:1.7;
+  background:var(--bg);border-radius:8px;padding:10px;}
+.login-err{color:var(--red);font-size:12.5px;text-align:center;min-height:18px;margin-bottom:8px;}
+
+/* ---------- 布局 ---------- */
+#app{display:none;}
+#app.on{display:flex;min-height:100vh;}
+.sidebar{width:var(--sidebar);background:#1F2329;color:#fff;flex-shrink:0;position:fixed;
+  top:0;bottom:0;left:0;display:flex;flex-direction:column;}
+.sb-logo{padding:20px 20px;font-size:16px;font-weight:800;display:flex;align-items:center;gap:9px;
+  border-bottom:1px solid rgba(255,255,255,.08);}
+.sb-logo span{font-size:20px;}
+.sb-menu{padding:12px 10px;flex:1;overflow-y:auto;}
+.sb-item{display:flex;align-items:center;gap:11px;padding:11px 14px;border-radius:9px;
+  color:rgba(255,255,255,.7);font-size:13.5px;font-weight:600;margin-bottom:3px;transition:.15s;cursor:pointer;}
+.sb-item:hover{background:rgba(255,255,255,.07);color:#fff;}
+.sb-item.on{background:var(--primary);color:#fff;}
+.sb-item .ico{font-size:16px;width:20px;text-align:center;}
+.sb-item .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10.5px;
+  padding:1px 7px;border-radius:9px;font-weight:700;}
+.sb-foot{padding:14px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:12px;color:rgba(255,255,255,.5);}
+.sb-foot .who{color:#fff;font-weight:600;margin-bottom:8px;font-size:13px;}
+.sb-foot button{color:rgba(255,255,255,.6);font-size:12px;padding:4px 0;}
+.sb-foot button:hover{color:var(--primary);}
+
+.main{margin-left:var(--sidebar);flex:1;min-width:0;}
+.topbar{background:#fff;padding:16px 26px;display:flex;align-items:center;justify-content:space-between;
+  box-shadow:0 1px 6px rgba(0,0,0,.04);position:sticky;top:0;z-index:20;}
+.topbar h2{font-size:17px;font-weight:800;}
+.topbar .tb-right{display:flex;align-items:center;gap:12px;font-size:12.5px;color:var(--text-3);}
+.content{padding:22px 26px 60px;}
+.page{display:none;} .page.on{display:block;}
+
+/* ---------- 统计卡片 ---------- */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:20px;}
+.card{background:#fff;border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+.card::after{content:"";position:absolute;right:-18px;top:-18px;width:66px;height:66px;
+  background:var(--primary-pale);border-radius:50%;}
+.card .lb{font-size:12.5px;color:var(--text-3);font-weight:600;position:relative;z-index:2;}
+.card .num{font-size:27px;font-weight:800;margin-top:7px;position:relative;z-index:2;
+  font-variant-numeric:tabular-nums;}
+.card .num.orange{color:var(--primary);}
+.card .num.green{color:var(--green);}
+.card .num.red{color:var(--red);}
+
+.panel{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:18px;overflow:hidden;}
+.panel-head{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;
+  align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.panel-head h3{font-size:14.5px;font-weight:800;display:flex;align-items:center;gap:7px;}
+.panel-head h3::before{content:"";width:3px;height:14px;background:var(--primary-grad);border-radius:2px;}
+.panel-body{padding:16px 18px;}
+
+/* ---------- 图表 ---------- */
+.chart{display:flex;align-items:flex-end;gap:10px;height:170px;padding:10px 4px 0;}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end;}
+.bar{width:100%;max-width:46px;border-radius:6px 6px 0 0;background:var(--primary-grad);
+  min-height:3px;transition:.3s;position:relative;}
+.bar:hover{opacity:.82;}
+.bar .val{position:absolute;top:-19px;left:50%;transform:translateX(-50%);
+  font-size:11px;font-weight:700;color:var(--primary);white-space:nowrap;}
+.bar-lb{font-size:11px;color:var(--text-3);white-space:nowrap;}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--text-2);margin-top:12px;justify-content:center;}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle;}
+
+/* ---------- 表格 ---------- */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+.toolbar input,.toolbar select{background:#fff;border-radius:9px;padding:9px 13px;font-size:13px;
+  box-shadow:var(--shadow);min-width:130px;}
+.toolbar input{flex:1;min-width:180px;}
+.btn{background:#fff;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:600;
+  box-shadow:var(--shadow);transition:.15s;}
+.btn:hover{color:var(--primary);}
+.btn.primary{background:var(--primary-grad);color:#fff;box-shadow:0 4px 12px rgba(255,107,0,.28);}
+.btn.primary:hover{opacity:.9;}
+.btn.danger{color:var(--red);}
+.btn.sm{padding:5px 11px;font-size:12px;box-shadow:none;border:1px solid var(--line);}
+.btn.sm:hover{border-color:var(--primary);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;padding:11px 12px;font-size:12px;color:var(--text-3);font-weight:700;
+  background:#FAFBFC;white-space:nowrap;}
+td{padding:12px;border-top:1px solid var(--line);vertical-align:middle;}
+tr:hover td{background:#FCFCFD;}
+.t-title{font-weight:700;display:flex;align-items:center;gap:8px;}
+.t-emoji{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;
+  justify-content:center;font-size:15px;flex-shrink:0;}
+.pill{display:inline-block;padding:2px 9px;border-radius:9px;font-size:11px;font-weight:700;}
+.pill.food{background:#FFF4EC;color:var(--primary);}
+.pill.fun{background:#EEF4FF;color:#3B7DFF;}
+.pill.published{background:#E8F8F0;color:var(--green);}
+.pill.pending{background:#FFF8E6;color:var(--yellow);}
+.pill.rejected{background:#FFEDED;color:var(--red);}
+.row-act{display:flex;gap:7px;flex-wrap:wrap;}
+
+/* ---------- 弹窗 ---------- */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none;
+  align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto;}
+.modal.on{display:flex;}
+.modal-box{background:#fff;border-radius:14px;width:100%;max-width:640px;
+  box-shadow:0 20px 60px rgba(0,0,0,.28);}
+.modal-head{padding:17px 20px;border-bottom:1px solid var(--line);display:flex;
+  align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;
+  border-radius:14px 14px 0 0;z-index:2;}
+.modal-head h3{font-size:15.5px;font-weight:800;}
+.modal-head .x{font-size:19px;color:var(--text-3);width:30px;height:30px;border-radius:50%;}
+.modal-head .x:hover{background:var(--bg);}
+.modal-body{padding:20px;max-height:64vh;overflow-y:auto;}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;
+  justify-content:flex-end;gap:10px;position:sticky;bottom:0;background:#fff;border-radius:0 0 14px 14px;}
+.f-row{display:flex;gap:12px;margin-bottom:14px;}
+.f-col{flex:1;}
+.f-col label{display:block;font-size:12.5px;font-weight:700;margin-bottom:6px;color:var(--text-2);}
+.f-col input,.f-col select,.f-col textarea{width:100%;background:var(--bg);border-radius:9px;
+  padding:10px 12px;font-size:13.5px;}
+.f-col textarea{resize:vertical;min-height:66px;}
+.f-col input:focus,.f-col select:focus,.f-col textarea:focus{background:var(--primary-pale);}
+.entry-edit{border:1.5px dashed #FFD9BE;border-radius:10px;padding:13px;margin-bottom:11px;
+  background:#FFFCFA;position:relative;}
+.entry-edit .del{position:absolute;right:9px;top:9px;color:var(--text-3);font-size:14px;
+  width:24px;height:24px;border-radius:50%;background:#fff;line-height:24px;text-align:center;}
+.entry-edit .eh{font-size:12px;font-weight:800;color:var(--primary);margin-bottom:9px;}
+
+/* ---------- 其他 ---------- */
+.empty{text-align:center;padding:46px 20px;color:var(--text-3);}
+.empty .e-ico{font-size:42px;opacity:.45;margin-bottom:10px;}
+.empty .e-txt{font-size:13px;}
+#toast{position:fixed;left:50%;top:26px;transform:translateX(-50%) translateY(-16px);
+  background:#1F2329;color:#fff;padding:11px 22px;border-radius:10px;font-size:13.5px;
+  font-weight:600;z-index:300;opacity:0;pointer-events:none;transition:.25s;}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.4);
+  border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;}
+@keyframes sp{to{transform:rotate(360deg)}}
+.loading{text-align:center;padding:40px;color:var(--text-3);font-size:13px;}
+@media(max-width:760px){
+  .sidebar{transform:translateX(-100%);transition:.25s;z-index:60;}
+  .sidebar.open{transform:none;}
+  .main{margin-left:0;}
+  .menu-toggle{display:block!important;}
+  .content{padding:16px;}
+}
+.menu-toggle{display:none;font-size:20px;margin-right:12px;}
+</style>
+</head>
+<body>
+
+<!-- ================= 登录 ================= -->
+<div id="login">
+  <div class="login-box">
+    <div class="login-logo">🪐</div>
+    <h1>榜单星球 管理后台</h1>
+    <div class="sub">同城美食娱乐榜单 · 内容管理与数据运营</div>
+    <div class="login-err" id="loginErr"></div>
+    <div class="field">
+      <label>管理员账号</label>
+      <input id="username" placeholder="请输入账号" value="admin" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>登录密码</label>
+      <input id="password" type="password" placeholder="请输入密码" autocomplete="current-password">
+    </div>
+    <button class="btn-primary" id="loginBtn" onclick="doLogin()">登 录</button>
+    <div class="login-tip">默认账号 <b>admin</b> / 密码 <b>admin123</b><br>首次登录后请及时修改密码</div>
+  </div>
+</div>
+
+<!-- ================= 主界面 ================= -->
+<div id="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-logo"><span>🪐</span> 榜单星球</div>
+    <nav class="sb-menu">
+      <div class="sb-item on" data-page="dash" onclick="nav('dash')"><span class="ico">📊</span>数据总览</div>
+      <div class="sb-item" data-page="ranks" onclick="nav('ranks')"><span class="ico">🏆</span>榜单管理</div>
+      <div class="sb-item" data-page="pending" onclick="nav('pending')"><span class="ico">📥</span>待审核<span class="badge" id="pendBadge" style="display:none">0</span></div>
+      <div class="sb-item" data-page="search" onclick="nav('search')"><span class="ico">🔍</span>内容检索</div>
+      <div class="sb-item" data-page="setting" onclick="nav('setting')"><span class="ico">⚙️</span>账号设置</div>
+    </nav>
+    <div class="sb-foot">
+      <div class="who" id="whoami">管理员</div>
+      <button onclick="doLogout()">退出登录 →</button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;">
+        <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+        <h2 id="pageTitle">数据总览</h2>
+      </div>
+      <div class="tb-right">
+        <span id="clock"></span>
+        <a href="/docs" target="_blank">API 文档 ↗</a>
+      </div>
+    </div>
+    <div class="content">
+
+      <!-- 数据总览 -->
+      <div class="page on" id="page-dash">
+        <div class="cards" id="statCards"></div>
+        <div class="panel">
+          <div class="panel-head">
+            <h3>近 7 日趋势</h3>
+            <span style="font-size:12px;color:var(--text-3);">浏览量与点赞量</span>
+          </div>
+          <div class="panel-body">
+            <div class="chart" id="chart"></div>
+            <div class="legend">
+              <span><i style="background:linear-gradient(135deg,#FF8A00,#FF5E00)"></i>浏览量</span>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>热门榜单 TOP5</h3></div>
+          <div class="panel-body" id="topRanks"></div>
+        </div>
+      </div>
+
+      <!-- 榜单管理 -->
+      <div class="page" id="page-ranks">
+        <div class="toolbar">
+          <input id="rkSearch" placeholder="搜索标题或城市..." oninput="debounceLoadRanks()">
+          <select id="rkStatus" onchange="loadRanks()">
+            <option value="all">全部状态</option>
+            <option value="published">已发布</option>
+            <option value="pending">待审核</option>
+            <option value="rejected">已驳回</option>
+          </select>
+          <select id="rkCat" onchange="loadRanks()">
+            <option value="all">全部分类</option>
+            <option value="food">美食</option>
+            <option value="fun">娱乐</option>
+          </select>
+          <button class="btn primary" onclick="openEdit(null)">＋ 新建榜单</button>
+        </div>
+        <div class="panel">
+          <div id="rankTable"><div class="loading">加载中...</div></div>
+        </div>
+      </div>
+
+      <!-- 待审核 -->
+      <div class="page" id="page-pending">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>用户提交的榜单</h3>
+            <span style="font-size:12px;color:var(--text-3);">审核通过后将展示在小程序中</span>
+          </div>
+          <div id="pendingList"><div class="loading">加载中...</div></div>
+        </div>
+      </div>
+
+      <!-- 内容检索 -->
+      <div class="page" id="page-search">
+        <div class="toolbar">
+          <input id="sq" placeholder="搜索榜单标题、店铺名称..." oninput="debounceSearch()">
+          <button class="btn" onclick="doSearch()">搜索</button>
+        </div>
+        <div id="searchOut"></div>
+      </div>
+
+      <!-- 账号设置 -->
+      <div class="page" id="page-setting">
+        <div class="panel" style="max-width:520px;">
+          <div class="panel-head"><h3>修改登录密码</h3></div>
+          <div class="panel-body">
+            <div class="f-row"><div class="f-col">
+              <label>原密码</label><input type="password" id="oldPwd" placeholder="请输入原密码">
+            </div></div>
+            <div class="f-row"><div class="f-col">
+              <label>新密码</label><input type="password" id="newPwd" placeholder="至少 6 位">
+            </div></div>
+            <div class="f-row"><div class="f-col">
+              <label>确认新密码</label><input type="password" id="newPwd2" placeholder="请再次输入">
+            </div></div>
+            <button class="btn primary" onclick="changePwd()">确认修改</button>
+          </div>
+        </div>
+        <div class="panel" style="max-width:520px;">
+          <div class="panel-head"><h3>系统信息</h3></div>
+          <div class="panel-body" style="font-size:13px;color:var(--text-2);line-height:2;">
+            <div>接口文档：<a href="/docs" target="_blank">/docs</a>（Swagger 交互式调试）</div>
+            <div>数据存储：SQLite（data/rankplanet.db）</div>
+            <div>Token 有效期：24 小时</div>
+            <div id="sysStats"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- 编辑弹窗 -->
+<div class="modal" id="editModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 id="editTitle">编辑榜单</h3>
+      <button class="x" onclick="closeEdit()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="f-row">
+        <div class="f-col"><label>榜单标题 *</label><input id="eTitle" placeholder="例如：成都必吃十大苍蝇馆子"></div>
+      </div>
+      <div class="f-row">
+        <div class="f-col"><label>分类 *</label>
+          <select id="eCat"><option value="food">美食</option><option value="fun">娱乐</option></select>
+        </div>
+        <div class="f-col"><label>城市 *</label><input id="eCity" value="成都"></div>
+        <div class="f-col"><label>封面图标</label><input id="eCover" value="📋"></div>
+      </div>
+      <div class="f-row">
+        <div class="f-col"><label>榜单简介</label><textarea id="eDesc" placeholder="一句话介绍这份榜单"></textarea></div>
+      </div>
+      <div class="f-col" style="margin-bottom:14px;">
+        <label>上榜条目 *</label>
+        <div id="eEntries"></div>
+        <button class="btn sm" onclick="addEditEntry()">＋ 添加上榜项目</button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeEdit()">取消</button>
+      <button class="btn primary" id="saveBtn" onclick="saveRank()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   基础
+   ============================================================ */
+const API = '';
+let TOKEN = localStorage.getItem('rp_admin_token') || '';
+let curPage = 'dash';
+let editingId = null;
+
+const $ = id => document.getElementById(id);
+function toast(msg){
+  const t = $('toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(t._tm); t._tm = setTimeout(()=>t.classList.remove('on'), 2000);
+}
+function esc(s){ return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function fmt(n){ return n>=10000 ? (n/10000).toFixed(1)+'w' : String(n??0); }
+
+async function api(path, opts={}){
+  const headers = Object.assign({'Content-Type':'application/json'}, opts.headers||{});
+  if(TOKEN) headers['Authorization'] = 'Bearer ' + TOKEN;
+  const res = await fetch(API + path, Object.assign({}, opts, {headers}));
+  if(res.status === 401 && !path.includes('login')){
+    TOKEN = ''; localStorage.removeItem('rp_admin_token');
+    showLogin(); throw new Error('登录已过期，请重新登录');
+  }
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(data.detail || ('请求失败 ' + res.status));
+  return data;
+}
+
+/* ============================================================
+   登录
+   ============================================================ */
+function showLogin(){ $('login').style.display='flex'; $('app').classList.remove('on'); }
+function showApp(){ $('login').style.display='none'; $('app').classList.add('on'); }
+
+async function doLogin(){
+  const u = $('username').value.trim(), p = $('password').value;
+  const err = $('loginErr'); err.textContent = '';
+  if(!u || !p){ err.textContent = '请输入账号和密码'; return; }
+  const btn = $('loginBtn'); btn.disabled = true; btn.innerHTML = '<span class="spin"></span> 登录中';
+  try{
+    const d = await api('/api/admin/login', {method:'POST', body: JSON.stringify({username:u, password:p})});
+    TOKEN = d.token; localStorage.setItem('rp_admin_token', TOKEN);
+    $('password').value = '';
+    boot();
+  }catch(e){
+    err.textContent = e.message;
+  }finally{
+    btn.disabled = false; btn.textContent = '登 录';
+  }
+}
+async function doLogout(){
+  try{ await api('/api/admin/logout', {method:'POST'}); }catch(e){}
+  TOKEN = ''; localStorage.removeItem('rp_admin_token');
+  showLogin(); toast('已退出登录');
+}
+$('password').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+
+/* ============================================================
+   导航
+   ============================================================ */
+const TITLES = {dash:'数据总览', ranks:'榜单管理', pending:'待审核', search:'内容检索', setting:'账号设置'};
+function nav(page){
+  curPage = page;
+  document.querySelectorAll('.sb-item').forEach(x=>x.classList.toggle('on', x.dataset.page===page));
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
+  $('page-'+page).classList.add('on');
+  $('pageTitle').textContent = TITLES[page];
+  $('sidebar').classList.remove('open');
+  if(page==='dash') loadDash();
+  if(page==='ranks') loadRanks();
+  if(page==='pending') loadPending();
+  if(page==='setting') loadSysInfo();
+}
+
+/* ============================================================
+   数据总览
+   ============================================================ */
+async function loadDash(){
+  try{
+    const s = await api('/api/admin/stats');
+    $('statCards').innerHTML = [
+      ['榜单总数', s.rank_total, ''],
+      ['已发布', s.rank_published, 'green'],
+      ['待审核', s.rank_pending, s.rank_pending>0?'red':''],
+      ['上榜条目', s.entry_total, ''],
+      ['总点赞数', s.like_total, 'orange'],
+      ['总浏览量', s.view_total, ''],
+      ['今日浏览', s.today_views, 'orange'],
+      ['今日点赞', s.today_likes, 'orange'],
+      ['美食榜 / 娱乐榜', s.cat_food + ' / ' + s.cat_fun, ''],
+    ].map(([lb,num,cls])=>`
+      <div class="card">
+        <div class="lb">${lb}</div>
+        <div class="num ${cls}">${typeof num==='number'?fmt(num):num}</div>
+      </div>`).join('');
+    updatePendBadge(s.rank_pending);
+
+    // 趋势图
+    const t = await api('/api/admin/trend?days=7');
+    const map = {}; t.items.forEach(i=>map[i.d]=i);
+    const days = [];
+    for(let i=6;i>=0;i--){
+      const d = new Date(); d.setDate(d.getDate()-i);
+      const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      days.push({key, label:(d.getMonth()+1)+'/'+d.getDate(), views:(map[key]?.views)||0});
+    }
+    const max = Math.max(1, ...days.map(d=>d.views));
+    $('chart').innerHTML = days.map(d=>`
+      <div class="bar-wrap">
+        <div class="bar" style="height:${Math.max(3, d.views/max*140)}px" title="${d.key}：${d.views} 次浏览">
+          <span class="val">${d.views||''}</span>
+        </div>
+        <div class="bar-lb">${d.label}</div>
+      </div>`).join('');
+
+    // 热门榜单
+    const lb = await api('/api/leaderboard?limit=5');
+    $('topRanks').innerHTML = lb.items.length ? lb.items.map(r=>`
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);">
+        <div style="font-size:17px;font-weight:900;color:var(--primary);width:24px;font-style:italic;">${r.rank_no}</div>
+        <div class="t-emoji" style="background:var(--primary-pale);width:34px;height:34px;">${r.cover}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:13.5px;">${esc(r.title)}</div>
+          <div style="font-size:11.5px;color:var(--text-3);">${esc(r.city)} · ${r.cat==='food'?'美食':'娱乐'} · 浏览 ${fmt(r.views)}</div>
+        </div>
+        <div style="font-size:13px;font-weight:800;color:var(--primary);">🔥 ${fmt(r.hotness)}</div>
+      </div>`).join('') : '<div class="empty"><div class="e-txt">暂无数据</div></div>';
+  }catch(e){ toast(e.message); }
+}
+function updatePendBadge(n){
+  const b = $('pendBadge');
+  if(n>0){ b.style.display='inline-block'; b.textContent = n; } else { b.style.display='none'; }
+}
+
+/* ============================================================
+   榜单管理
+   ============================================================ */
+let rkTimer = null;
+function debounceLoadRanks(){ clearTimeout(rkTimer); rkTimer = setTimeout(loadRanks, 320); }
+
+async function loadRanks(){
+  const q = $('rkSearch').value.trim();
+  const status = $('rkStatus').value, cat = $('rkCat').value;
+  $('rankTable').innerHTML = '<div class="loading">加载中...</div>';
+  try{
+    const d = await api(`/api/admin/ranks?status=${status}&cat=${cat}&q=${encodeURIComponent(q)}`);
+    if(!d.items.length){
+      $('rankTable').innerHTML = '<div class="empty"><div class="e-ico">📭</div><div class="e-txt">没有符合条件的榜单</div></div>';
+      return;
+    }
+    $('rankTable').innerHTML = `
+      <table>
+        <thead><tr>
+          <th style="width:32%">榜单</th><th>分类</th><th>城市</th>
+          <th>条目</th><th>点赞</th><th>浏览</th><th>状态</th><th style="width:190px">操作</th>
+        </tr></thead>
+        <tbody>${d.items.map(r=>`
+          <tr>
+            <td><div class="t-title">
+              <div class="t-emoji" style="background:var(--primary-pale);">${r.cover}</div>
+              <div style="min-width:0;">
+                <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:230px;">${esc(r.title)}</div>
+                <div style="font-size:11px;color:var(--text-3);font-weight:400;">${r.id} · ${r.self?'用户发布':'官方'}</div>
+              </div>
+            </div></td>
+            <td><span class="pill ${r.cat}">${r.cat==='food'?'美食':'娱乐'}</span></td>
+            <td>${esc(r.city)}</td>
+            <td>${r.entry_count}</td>
+            <td>${r.total_likes}</td>
+            <td>${fmt(r.views)}</td>
+            <td><span class="pill ${r.status}">${{published:'已发布',pending:'待审核',rejected:'已驳回'}[r.status]}</span></td>
+            <td><div class="row-act">
+              <button class="btn sm" onclick="openEdit('${r.id}')">编辑</button>
+              ${r.status!=='published'?`<button class="btn sm" style="color:var(--green);border-color:#B7E6D3" onclick="setStatus('${r.id}','published')">通过</button>`:''}
+              ${r.status==='pending'?`<button class="btn sm" style="color:var(--yellow);border-color:#FFE2A8" onclick="setStatus('${r.id}','rejected')">驳回</button>`:''}
+              <button class="btn sm danger" onclick="delRank('${r.id}','${esc(r.title).replace(/'/g,"")}')">删除</button>
+            </div></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }catch(e){
+    $('rankTable').innerHTML = `<div class="empty"><div class="e-txt">加载失败：${esc(e.message)}</div></div>`;
+  }
+}
+
+async function setStatus(id, status){
+  try{
+    await api(`/api/admin/ranks/${id}/status`, {method:'PUT', body: JSON.stringify({status})});
+    toast(status==='published'?'已通过审核 ✓':'已驳回');
+    loadRanks(); loadDash();
+  }catch(e){ toast(e.message); }
+}
+async function delRank(id, title){
+  if(!confirm(`确定删除榜单「${title}」吗？\n该操作会同时删除其全部条目与点赞记录，不可恢复。`)) return;
+  try{
+    await api(`/api/admin/ranks/${id}`, {method:'DELETE'});
+    toast('已删除'); loadRanks(); loadDash();
+  }catch(e){ toast(e.message); }
+}
+
+/* ============================================================
+   待审核
+   ============================================================ */
+async function loadPending(){
+  $('pendingList').innerHTML = '<div class="loading">加载中...</div>';
+  try{
+    const d = await api('/api/admin/ranks?status=pending');
+    updatePendBadge(d.items.length);
+    if(!d.items.length){
+      $('pendingList').innerHTML = '<div class="empty"><div class="e-ico">✅</div><div class="e-txt">太棒了，没有待审核的内容</div></div>';
+      return;
+    }
+    $('pendingList').innerHTML = d.items.map(r=>`
+      <div style="padding:16px 18px;border-bottom:1px solid var(--line);">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <div class="t-emoji" style="background:var(--primary-pale);width:38px;height:38px;font-size:18px;">${r.cover}</div>
+          <div style="flex:1;min-width:200px;">
+            <div style="font-weight:800;font-size:14.5px;">${esc(r.title)}</div>
+            <div style="font-size:12px;color:var(--text-3);margin-top:3px;">
+              ${esc(r.city)} · ${r.cat==='food'?'美食':'娱乐'} · ${r.entry_count} 个条目 · ${r.created_at}
+            </div>
+          </div>
+          <div class="row-act">
+            <button class="btn sm primary" onclick="setStatus('${r.id}','published');loadPending()">✓ 通过</button>
+            <button class="btn sm danger" onclick="setStatus('${r.id}','rejected');loadPending()">✕ 驳回</button>
+            <button class="btn sm" onclick="openEdit('${r.id}')">查看/编辑</button>
+          </div>
+        </div>
+        <div style="margin-top:11px;font-size:13px;color:var(--text-2);">${esc(r.desc)}</div>
+      </div>`).join('');
+  }catch(e){
+    $('pendingList').innerHTML = `<div class="empty"><div class="e-txt">加载失败：${esc(e.message)}</div></div>`;
+  }
+}
+
+/* ============================================================
+   编辑弹窗
+   ============================================================ */
+let editSeq = 0;
+function openEdit(id){
+  editingId = id;
+  $('editTitle').textContent = id ? '编辑榜单' : '新建榜单';
+  $('eEntries').innerHTML = '';
+  if(id){
+    api('/api/admin/ranks/'+id).then(r=>{
+      $('eTitle').value = r.title; $('eCat').value = r.cat;
+      $('eCity').value = r.city; $('eCover').value = r.cover;
+      $('eDesc').value = r.desc || '';
+      r.entries.forEach(e=>addEditEntry(e));
+      $('editModal').classList.add('on');
+    }).catch(e=>toast(e.message));
+  }else{
+    $('eTitle').value=''; $('eCat').value='food'; $('eCity').value='成都';
+    $('eCover').value='📋'; $('eDesc').value='';
+    addEditEntry();
+    $('editModal').classList.add('on');
+  }
+}
+function closeEdit(){ $('editModal').classList.remove('on'); }
+
+function addEditEntry(e){
+  editSeq++;
+  const id = 'ee'+editSeq;
+  const div = document.createElement('div');
+  div.className = 'entry-edit'; div.id = id;
+  div.innerHTML = `
+    <button class="del" onclick="this.parentNode.remove()">✕</button>
+    <div class="eh">第 <span class="seq"></span> 名</div>
+    <div class="f-row"><div class="f-col"><label>名称 *</label>
+      <input data-k="n" placeholder="店铺/项目名称" value="${e?esc(e.n):''}"></div></div>
+    <div class="f-row">
+      <div class="f-col"><label>评分</label><input data-k="s" value="${e?(e.s??4.5):4.5}"></div>
+      <div class="f-col"><label>人均</label><input data-k="p" placeholder="¥50" value="${e?esc(e.p):''}"></div>
+      <div class="f-col" style="max-width:90px;"><label>图标</label>
+        <input data-k="e" value="${e?esc(e.e):'🍽️'}"></div>
+    </div>
+    <div class="f-row"><div class="f-col"><label>上榜理由</label>
+      <input data-k="r" placeholder="一句话推荐" value="${e?esc(e.r):''}"></div></div>
+    <div class="f-row"><div class="f-col"><label>地址</label>
+      <input data-k="a" placeholder="区域/街道" value="${e?esc(e.a):''}"></div></div>
+    <div class="f-row"><div class="f-col"><label>标签（逗号分隔）</label>
+      <input data-k="tags" placeholder="火锅,夜宵" value="${e?esc((e.tags||[]).join(',')):''}"></div></div>
+  `;
+  $('eEntries').appendChild(div);
+  renum();
+}
+function renum(){
+  const kids = $('eEntries').children;
+  for(let i=0;i<kids.length;i++){ const s = kids[i].querySelector('.seq'); if(s) s.textContent = i+1; }
+}
+
+async function saveRank(){
+  const title = $('eTitle').value.trim();
+  if(!title){ toast('请填写榜单标题'); return; }
+  const eds = $('eEntries').children;
+  const entries = [];
+  for(let i=0;i<eds.length;i++){
+    const g = k => eds[i].querySelector(`[data-k="${k}"]`).value.trim();
+    const n = g('n'); if(!n) continue;
+    entries.push({
+      n, s: parseFloat(g('s'))||4.5, p: g('p'), r: g('r'), a: g('a'),
+      e: g('e')||'🍽️',
+      tags: g('tags') ? g('tags').split(/[,，]/).map(x=>x.trim()).filter(Boolean) : []
+    });
+  }
+  if(!entries.length){ toast('请至少填写 1 个上榜条目'); return; }
+  const body = {
+    title, cat: $('eCat').value, city: $('eCity').value.trim()||'成都',
+    cover: $('eCover').value.trim()||'📋', grad: Math.floor(Math.random()*10),
+    desc: $('eDesc').value.trim(), entries
+  };
+  const btn = $('saveBtn'); btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
+  try{
+    if(editingId) await api('/api/admin/ranks/'+editingId, {method:'PUT', body: JSON.stringify(body)});
+    else await api('/api/admin/ranks', {method:'POST', body: JSON.stringify(body)});
+    toast('保存成功 ✓'); closeEdit();
+    if(curPage==='ranks') loadRanks(); else if(curPage==='pending') loadPending(); else loadDash();
+  }catch(e){ toast(e.message); }
+  finally{ btn.disabled = false; btn.textContent = '保存'; }
+}
+
+/* ============================================================
+   内容检索
+   ============================================================ */
+let sTimer = null;
+function debounceSearch(){ clearTimeout(sTimer); sTimer = setTimeout(doSearch, 350); }
+async function doSearch(){
+  const q = $('sq').value.trim();
+  if(!q){ $('searchOut').innerHTML = '<div class="empty"><div class="e-ico">🔍</div><div class="e-txt">输入关键词开始检索</div></div>'; return; }
+  $('searchOut').innerHTML = '<div class="loading">检索中...</div>';
+  try{
+    const d = await api('/api/search?q='+encodeURIComponent(q));
+    let html = '';
+    html += `<div class="panel"><div class="panel-head"><h3>相关榜单（${d.ranks.length}）</h3></div>`;
+    html += d.ranks.length ? `<table><thead><tr><th>标题</th><th>分类</th><th>城市</th><th>点赞</th><th>操作</th></tr></thead><tbody>`+
+      d.ranks.map(r=>`<tr>
+        <td class="t-title"><div class="t-emoji" style="background:var(--primary-pale);">${r.cover}</div>${esc(r.title)}</td>
+        <td><span class="pill ${r.cat}">${r.cat==='food'?'美食':'娱乐'}</span></td>
+        <td>${esc(r.city)}</td><td>${r.total_likes}</td>
+        <td><button class="btn sm" onclick="openEdit('${r.id}')">编辑</button></td>
+      </tr>`).join('')+'</tbody></table>' : '<div class="empty"><div class="e-txt">无匹配榜单</div></div>';
+    html += '</div>';
+
+    html += `<div class="panel"><div class="panel-head"><h3>相关店铺（${d.entries.length}）</h3></div>`;
+    html += d.entries.length ? `<table><thead><tr><th>店铺</th><th>所属榜单</th><th>城市</th><th>评分</th><th>点赞</th></tr></thead><tbody>`+
+      d.entries.map(e=>`<tr>
+        <td class="t-title"><div class="t-emoji" style="background:var(--primary-pale);">${e.e}</div>${esc(e.n)}</td>
+        <td>${esc(e.rank_title)}</td><td>${esc(e.rank_city)}</td>
+        <td>★ ${e.s}</td><td>${e.likes}</td>
+      </tr>`).join('')+'</tbody></table>' : '<div class="empty"><div class="e-txt">无匹配店铺</div></div>';
+    html += '</div>';
+    $('searchOut').innerHTML = html;
+  }catch(e){ $('searchOut').innerHTML = `<div class="empty"><div class="e-txt">检索失败：${esc(e.message)}</div></div>`; }
+}
+
+/* ============================================================
+   账号设置
+   ============================================================ */
+async function changePwd(){
+  const o = $('oldPwd').value, n = $('newPwd').value, n2 = $('newPwd2').value;
+  if(!o || !n){ toast('请填写完整'); return; }
+  if(n !== n2){ toast('两次输入的新密码不一致'); return; }
+  if(n.length < 6){ toast('新密码至少 6 位'); return; }
+  try{
+    await api('/api/admin/password', {method:'POST', body: JSON.stringify({old_password:o, new_password:n})});
+    toast('密码已修改，请重新登录');
+    setTimeout(doLogout, 1200);
+  }catch(e){ toast(e.message); }
+}
+async function loadSysInfo(){
+  try{
+    const s = await api('/api/admin/stats');
+    $('sysStats').innerHTML = `数据统计：${s.rank_total} 个榜单 / ${s.entry_total} 个条目 / ${s.like_total} 次点赞`;
+  }catch(e){}
+}
+
+/* ============================================================
+   启动
+   ============================================================ */
+function tick(){
+  const d = new Date();
+  $('clock').textContent = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+
+    String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+
+    String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');
+}
+setInterval(tick, 1000); tick();
+
+async function boot(){
+  try{
+    const me = await api('/api/admin/me');
+    $('whoami').textContent = me.username;
+    showApp();
+    nav('dash');
+  }catch(e){
+    showLogin();
+  }
+}
+
+// 有 token 则自动登录
+if(TOKEN) boot(); else showLogin();
+</script>
+</body>
+</html>
